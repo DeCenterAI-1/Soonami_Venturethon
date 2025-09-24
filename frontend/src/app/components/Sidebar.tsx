@@ -6,7 +6,7 @@ import Link from "next/link";
 const navigationItems = [
   {
     name: "Dashboard",
-    href: "/",
+    href: "/dashboard",
     icon: (
       <svg
         width="24"
