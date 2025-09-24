@@ -370,6 +370,7 @@ Absolutely! For the **Unreal Console frontend**, the features are designed to wo
 | Profile & Settings     | ✅ Full forms  | ✅ Full forms  | ✅ Responsive    |
 | Navigation             | ✅ Sidebar     | ✅ Sidebar     | ✅ Hamburger     |
 | Notifications          | ✅ Panel       | ✅ Panel       | ✅ Swipeable     |
+![Uploading Screenshot 2025-09-24 at 09.43.05.png…]()
 
 ---
 
