@@ -300,3 +300,76 @@ user01@Jeyabalans-MacBook-a Downloads % curl -X GET http://localhost:4000/dashbo
 
 {"message":"Dashboard data","user":{"wallet":"0x411caf28d09f8ba5893906179b2fc520c4f123f7f8f4625b79362089676b49fe","iat":1758608710,"exp":1759213510},"inferenceCount":5,"apiCount":2,"recentActivities":[]}%            
 user01@Jeyabalans-MacBook-a Downloads % 
+
+Absolutely! For the **Unreal Console frontend**, the features are designed to work across **multiple devices**—desktop, tablet, and mobile. Here’s a breakdown of the **frontend features with multi-device support**:
+
+---
+
+## **Frontend Features Across Devices**
+
+### 1. **Responsive Layout**
+
+* The UI automatically adjusts to different screen sizes (desktop, tablet, mobile).
+* Grid-based and flexbox layouts ensure consistent spacing and alignment.
+* Sidebar collapses into a hamburger menu on smaller screens.
+
+### 2. **Authentication**
+
+* Wallet-based login (Web3) works on both desktop and mobile wallets.
+* Email/password login & registration fully responsive.
+* “Forgot password” and “Remember Me” options accessible on all devices.
+
+### 3. **Dashboard**
+
+* Real-time API usage metrics and inference counts displayed with responsive charts.
+* Recent activity list adjusts to fit smaller screens (scrollable on mobile).
+* Notifications panel can be toggled or swiped for mobile users.
+
+### 4. **API Key Management**
+
+* CRUD operations (Generate, Revoke, Rename, Copy) available on all devices.
+* Keys can be copied easily on mobile with touch-friendly buttons.
+* API list table collapses into card view on mobile for readability.
+
+### 5. **Billing & Transactions**
+
+* Credit balance visible on all screens.
+* Transaction list uses a responsive table that switches to stacked cards on mobile.
+* Top-up flow optimized for touch inputs.
+
+### 6. **Chat Playground**
+
+* Mobile-friendly input box with autocomplete and scrollable chat history.
+* Supports interactive testing of API completions on desktop and mobile.
+* Chat UI adapts dynamically to screen width for better readability.
+
+### 7. **Settings & Profile**
+
+* Profile management forms are responsive.
+* Notification toggles (email/push/SMS) optimized for mobile.
+* Password change and profile updates accessible on small screens without horizontal scroll.
+
+### 8. **UI/UX Enhancements**
+
+* Multi-page navigation works with responsive menus (hamburger for mobile, full sidebar for desktop).
+* Buttons, inputs, and cards are touch-friendly for mobile users.
+* Tailwind CSS + shadcn/ui ensures consistent styling across devices.
+
+---
+
+### **Summary Table: Frontend Features Across Devices**
+
+| Feature                | Desktop       | Tablet        | Mobile          |
+| ---------------------- | ------------- | ------------- | --------------- |
+| Authentication         | ✅ Full login  | ✅ Full login  | ✅ Full login    |
+| Wallet Support         | ✅ Supported   | ✅ Supported   | ✅ Supported     |
+| Dashboard Metrics      | ✅ Full charts | ✅ Full charts | ✅ Responsive    |
+| API Key Management     | ✅ Table view  | ✅ Table view  | ✅ Card view     |
+| Billing & Transactions | ✅ Table view  | ✅ Table view  | ✅ Stacked cards |
+| Chat Playground        | ✅ Full screen | ✅ Full screen | ✅ Scrollable    |
+| Profile & Settings     | ✅ Full forms  | ✅ Full forms  | ✅ Responsive    |
+| Navigation             | ✅ Sidebar     | ✅ Sidebar     | ✅ Hamburger     |
+| Notifications          | ✅ Panel       | ✅ Panel       | ✅ Swipeable     |
+
+---
+
