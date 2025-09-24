@@ -1,5 +1,5 @@
 {
-<<<<<<< HEAD
+
     "name": "unreal-console-backend",
     "version": "1.0.0",
     "main": "src/server.ts",
@@ -22,7 +22,7 @@
         "ts-node-dev": "^2.0.0",
         "typescript": "^5.3.3"
     }
-=======
+
   "name": "backend",
   "version": "1.0.0",
   "main": "index.js",
@@ -44,5 +44,5 @@
     "ts-node-dev": "^2.0.0",
     "typescript": "^5.9.2"
   }
->>>>>>> 432e2f3d92872e8d5ad45415e19e929760b0d6e2
+
 }
