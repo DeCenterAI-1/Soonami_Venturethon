@@ -4,6 +4,18 @@ Here’s a complete **README.md** for your `unreal-console` project, aligned wit
 
 # Unreal Console
 
++---------------------+       +---------------------+
+|  Frontend (React)   | <---> | Backend (Node.js)   |
+|  - Dashboard        |       | - Auth Routes       |
+|  - API Management   |       | - API Routes        |
+|  - Chat Playground  |       | - Billing Routes    |
+|  - Settings         |       | - Web3 Auth         |
++---------------------+       +---------------------+
+          |                          |
+          v                          v
+      Users/Developers          JWT Auth + DB
+
+
 **Developer Dashboard for API Management & Integration**
 
 Unreal Console is a modern, React + Vite-based dashboard with a Node.js + Express backend, enabling developers to authenticate, generate API keys, and integrate applications with an OpenAI-compatible backend. It provides real-time monitoring, API management, and secure authentication using email/password or Web3 wallets.
