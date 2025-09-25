@@ -1,13 +1,11 @@
 "use client";
 
-import { generatePayload, verifyPayload } from "@/actions/auth";
 import { client } from "@/lib/thirdweb";
+import { amoyTestnet, titanAITestnet, torusMainnet } from "@/utils/chains";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
-import { defineChain } from "thirdweb";
-import { signLoginPayload } from "thirdweb/auth";
+
 import { ConnectButton, useActiveAccount } from "thirdweb/react";
-import { Account } from "thirdweb/wallets";
 
 export default function Header() {
   const account = useActiveAccount();
@@ -54,7 +52,10 @@ export default function Header() {
               </span> */}
 
               {/* Connect Button */}
-              <ConnectButton client={client} />
+              <ConnectButton
+                client={client}
+                chains={[torusMainnet, titanAITestnet, amoyTestnet]}
+              />
             </div>
 
             {/* Dropdown Arrow */}

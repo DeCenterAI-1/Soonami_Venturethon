@@ -37,6 +37,8 @@ export const registerUnrealApiAccess = async (
 
     const data = await response.json();
 
+    console.log("Unreal registration data", data);
+
     if (data.error) throw new Error(data.error);
 
     const unrealToken = data.token;
