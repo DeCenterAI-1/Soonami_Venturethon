@@ -1,15 +1,7 @@
 "use server";
 
 import { supabase } from "@/lib/supabase";
-
-interface UserType {
-  name?: string;
-  email?: string;
-  unreal_token?: string;
-  calls?: number;
-  is_admin?: boolean;
-  is_active?: boolean;
-}
+import { UserType } from "@/utils/types";
 
 export const getUserByWallet = async (userWallet: string) => {
   try {

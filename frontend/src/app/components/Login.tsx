@@ -1,7 +1,7 @@
 "use client";
 
 import { registerUnrealApiAccess } from "@/actions/unreal/register";
-import { getUserByWallet, updateUser } from "@/actions/users";
+import { getUserByWallet, updateUser } from "@/actions/supabase/users";
 import { client } from "@/lib/thirdweb";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
@@ -35,38 +35,39 @@ export default function Login() {
       const userRes = await getUserByWallet(account.address);
       if (!userRes.success) throw new Error("Get user by wallet failed.");
 
-      const payload = {
-        iss: account.address,
-        iat: Math.floor(Date.now() / 1000), // Current timestamp in seconds
-        exp: Math.floor(Date.now() / 1000) + 3600, // Expires in 1 hour (adjust)
-        calls: 0, // Initial calls (per API schema)
-        paymentToken: unRealPaymentToken,
-        sub: unRealOpenaiAddress,
-      };
+      if (!userRes.data.unreal_token) {
+        const payload = {
+          iss: account.address,
+          iat: Math.floor(Date.now() / 1000), // Current timestamp in seconds
+          exp: Math.floor(Date.now() / 1000) + 3600, // Expires in 1 hour (adjust)
+          calls: 50, // Initial calls (per API schema)
+          paymentToken: unRealPaymentToken,
+          sub: unRealOpenaiAddress,
+        };
 
-      const jsonPayload = JSON.stringify(payload);
+        const jsonPayload = JSON.stringify(payload);
 
-      const signature = await account.signMessage({
-        message: JSON.stringify(payload),
-      });
+        const signature = await account.signMessage({
+          message: JSON.stringify(payload),
+        });
 
-      console.log("Sign Message Signature", signature);
+        console.log("Sign Message Signature", signature);
 
-      // Register Unreal API Accress
-      const unrealRegisterRes = await registerUnrealApiAccess(
-        jsonPayload,
-        account.address,
-        signature
-      );
+        // Register Unreal API Accress
+        const unrealRegisterRes = await registerUnrealApiAccess(
+          jsonPayload,
+          account.address,
+          signature
+        );
 
-      if (!unrealRegisterRes.success) {
-        throw new Error("Unreal API registration failed");
+        if (!unrealRegisterRes.success) {
+          throw new Error("Unreal API registration failed");
+        }
+
+        const { unrealToken } = unrealRegisterRes;
+
+        await updateUser(account.address, { unreal_token: unrealToken });
       }
-
-      const { unrealToken } = unrealRegisterRes;
-
-      await updateUser(account.address, { unreal_token: unrealToken });
-
       return true; // Indicate success
     } catch (error) {
       console.error(
@@ -151,7 +152,7 @@ export default function Login() {
               </svg>
               {/* Connect Button */}
               <ConnectButton
-                chains={[titanAITestnet, amoyTestnet, torusMainnet]}
+                chain={titanAITestnet}
                 client={client}
                 connectButton={{
                   label: "Sign in with Wallet",

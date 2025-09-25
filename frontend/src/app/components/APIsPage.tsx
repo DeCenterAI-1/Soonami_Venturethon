@@ -2,38 +2,136 @@
 
 import Sidebar from "./Sidebar";
 import Header from "./Header";
-import { getAllUnrealApiKeys } from "@/actions/unreal/api";
+import {
+  createUnrealApiKey,
+  deleteApiKey,
+  getAllUnrealApiKeys,
+} from "@/actions/unreal/api";
 import { useActiveAccount } from "thirdweb/react";
-
-const apisData = [
-  {
-    name: "Production API",
-    created: "Aug 18, 2023 at 04:12 pm",
-    lastUsed: "20h ago",
-    inferences: "345",
-  },
-  {
-    name: "Development API",
-    created: "Aug 18, 2023 at 04:12 pm",
-    lastUsed: "2d ago",
-    inferences: "756",
-  },
-];
+import { useEffect, useState } from "react";
+import { getUserByWallet } from "@/actions/supabase/users";
+import {
+  getApiKeysByUser,
+  syncApiKeysWithUnreal,
+} from "@/actions/supabase/api_keys";
+import { toast } from "react-toastify";
+import { ApiKey } from "@/utils/types";
 
 export default function APIsPage() {
   const userAccount = useActiveAccount();
+  const [apiKeys, setApiKeys] = useState<ApiKey[]>([]);
+  const [filter, setFilter] = useState("");
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [apiName, setApiName] = useState("");
 
-  const getAllUnrealApis = async () => {
-    if (!userAccount) return;
+  const fetchAndSyncApiKeys = async () => {
+    if (!userAccount?.address) return;
 
     try {
-      const keys = await getAllUnrealApiKeys(userAccount?.address);
+      // Get user from Supabase to get userId
+      const userRes = await getUserByWallet(userAccount.address);
+      if (!userRes.success || !userRes.data.id) {
+        throw new Error("Failed to retrieve user ID");
+      }
+      const userId = userRes.data.id;
 
-      console.log("All Unreal Api Keys", keys);
+      // Fetch Unreal API keys
+      const unrealKeysRes = await getAllUnrealApiKeys(userAccount.address);
+      if (!unrealKeysRes.success) {
+        throw new Error("Failed to fetch Unreal API keys");
+      }
+
+      console.log("Unreal Api keys", unrealKeysRes);
+
+      if (unrealKeysRes.data) {
+        // Sync with Supabase
+        const syncRes = await syncApiKeysWithUnreal(userId, unrealKeysRes.data);
+        if (!syncRes.success) {
+          throw new Error("Failed to sync API keys with Supabase");
+        }
+
+        // Fetch updated API keys from Supabase
+        const apiKeysRes = await getApiKeysByUser(userId);
+        if (!apiKeysRes.success) {
+          throw new Error("Failed to fetch API keys from Supabase");
+        }
+
+        setApiKeys(apiKeysRes.data || []);
+      }
     } catch (error) {
-      console.error(error instanceof Error ? error.message : error);
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "An error occurred while syncing API keys"
+      );
     }
   };
+
+  const handleGenerateApi = async () => {
+    if (!userAccount?.address) {
+      toast.error("Please connect your wallet");
+      return;
+    }
+
+    if (!apiName.trim()) {
+      toast.error("API name cannot be blank");
+      return;
+    }
+
+    try {
+      const res = await createUnrealApiKey(userAccount.address, apiName);
+      if (res.success) {
+        toast.success("API key generated successfully");
+        setIsModalOpen(false); // Close modal on success
+        setApiName(""); // Reset input
+
+        await new Promise((resolve) => setTimeout(resolve, 2000));
+        await fetchAndSyncApiKeys(); // Re-sync to update the table
+      } else {
+        throw new Error(res.message);
+      }
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Failed to generate API key"
+      );
+    }
+  };
+
+  const handleCopyApiKey = (apiKey: string) => {
+    navigator.clipboard.writeText(apiKey);
+    toast.success("API key copied to clipboard!");
+  };
+
+  const handleRevokeApiKey = async (apiKey: string) => {
+    if (!userAccount?.address) {
+      toast.error("Please connect your wallet");
+      return;
+    }
+
+    try {
+      const res = await deleteApiKey(apiKey, userAccount.address);
+      if (res.success) {
+        toast.success("API key revoked successfully");
+        // Wait for 3 seconds before refreshing
+        await new Promise((resolve) => setTimeout(resolve, 2000));
+        await fetchAndSyncApiKeys();
+      } else {
+        throw new Error(res.message);
+      }
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Failed to revoke API key"
+      );
+    }
+  };
+
+  const filteredApiKeys = apiKeys.filter((key) =>
+    key.api_name?.toLowerCase().includes(filter.toLowerCase())
+  );
+
+  useEffect(() => {
+    fetchAndSyncApiKeys();
+  }, [userAccount]);
 
   return (
     <div className="min-h-screen bg-[#050505] flex">
@@ -72,12 +170,16 @@ export default function APIsPage() {
                       type="text"
                       placeholder="Filter by name"
                       className="flex-1 bg-transparent text-[#5D5D5D] text-sm placeholder-[#5D5D5D] outline-none"
+                      value={filter}
+                      onChange={(e) => setFilter(e.target.value)}
                     />
                   </div>
 
                   {/* Generate API Button */}
                   <button
-                    onClick={getAllUnrealApis}
+                    onClick={() => {
+                      setIsModalOpen(true);
+                    }}
                     className="bg-[#232323] text-[#F5F5F5] px-6 py-3 rounded-[20px] font-semibold text-base hover:bg-[#2B2B2B] transition-colors"
                   >
                     Generate API
@@ -85,18 +187,20 @@ export default function APIsPage() {
 
                   {/* Sort Button */}
                   <div className="flex items-center gap-2 py-2 px-6">
-                    <svg
-                      width="24"
-                      height="24"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      xmlns="http://www.w3.org/2000/svg"
-                    >
-                      <path
-                        d="M12 12C12 12.1989 11.921 12.3897 11.7803 12.5303C11.6397 12.671 11.4489 12.75 11.25 12.75H4.5C4.30109 12.75 4.11032 12.671 3.96967 12.5303C3.82902 12.3897 3.75 12.1989 3.75 12C3.75 11.8011 3.82902 11.6103 3.96967 11.4697C4.11032 11.329 4.30109 11.25 4.5 11.25H11.25C11.4489 11.25 11.6397 11.329 11.7803 11.4697C11.921 11.6103 12 11.8011 12 12ZM4.5 6.75H17.25C17.4489 6.75 17.6397 6.67098 17.7803 6.53033C17.921 6.38968 18 6.19891 18 6C18 5.80109 17.921 5.61032 17.7803 5.46967C17.6397 5.32902 17.4489 5.25 17.25 5.25H4.5C4.30109 5.25 4.11032 5.32902 3.96967 5.46967C3.82902 5.61032 3.75 5.80109 3.75 6C3.75 6.19891 3.82902 6.38968 3.96967 6.53033C4.11032 6.67098 4.30109 6.75 4.5 6.75ZM9.75 17.25H4.5C4.30109 17.25 4.11032 17.329 3.96967 17.4697C3.82902 17.6103 3.75 17.8011 3.75 18C3.75 18.1989 3.82902 18.3897 3.96967 18.5303C4.11032 18.671 4.30109 18.75 4.5 18.75H9.75C9.94891 18.75 10.1397 18.671 10.2803 18.5303C10.421 18.3897 10.5 18.1989 10.5 18C10.5 17.8011 10.421 17.6103 10.2803 17.4697C10.1397 17.329 9.94891 17.25 9.75 17.25ZM21.5306 15.2194C21.461 15.1496 21.3783 15.0943 21.2872 15.0566C21.1962 15.0188 21.0986 14.9994 21 14.9994C20.9014 14.9994 20.8038 15.0188 20.7128 15.0566C20.6217 15.0943 20.539 15.1496 20.4694 15.2194L18 17.6897V10.5C18 10.3011 17.921 10.1103 17.7803 9.96967C17.6397 9.82902 17.4489 9.75 17.25 9.75C17.0511 9.75 16.8603 9.82902 16.7197 9.96967C16.579 10.1103 16.5 10.3011 16.5 10.5V17.6897L14.0306 15.2194C13.8899 15.0786 13.699 14.9996 13.5 14.9996C13.301 14.9996 13.1101 15.0786 12.9694 15.2194C12.8286 15.3601 12.7496 15.551 12.7496 15.75C12.7496 15.949 12.8286 16.1399 12.9694 16.2806L16.7194 20.0306C16.789 20.1004 16.8717 20.1557 16.9628 20.1934C17.0538 20.2312 17.1514 20.2506 17.25 20.2506C17.3486 20.2506 17.4462 20.2312 17.5372 20.1934C17.6283 20.1557 17.711 20.1004 17.7806 20.0306L21.5306 16.2806C21.6004 16.211 21.6557 16.1283 21.6934 16.0372C21.7312 15.9462 21.7506 15.8486 21.7506 15.75C21.7506 15.6514 21.7312 15.5538 21.6934 15.4628C21.6557 15.3717 21.6004 15.289 21.5306 15.2194Z"
-                        fill="#5D5D5D"
-                      />
-                    </svg>
+                    <button disabled className="cursor-not-allowed">
+                      <svg
+                        width="24"
+                        height="24"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        xmlns="http://www.w3.org/2000/svg"
+                      >
+                        <path
+                          d="M12 12C12 12.1989 11.921 12.3897 11.7803 12.5303C11.6397 12.671 11.4489 12.75 11.25 12.75H4.5C4.30109 12.75 4.11032 12.671 3.96967 12.5303C3.82902 12.3897 3.75 12.1989 3.75 12C3.75 11.8011 3.82902 11.6103 3.96967 11.4697C4.11032 11.329 4.30109 11.25 4.5 11.25H11.25C11.4489 11.25 11.6397 11.329 11.7803 11.4697C11.921 11.6103 12 11.8011 12 12ZM4.5 6.75H17.25C17.4489 6.75 17.6397 6.67098 17.7803 6.53033C17.921 6.38968 18 6.19891 18 6C18 5.80109 17.921 5.61032 17.7803 5.46967C17.6397 5.32902 17.4489 5.25 17.25 5.25H4.5C4.30109 5.25 4.11032 5.32902 3.96967 5.46967C3.82902 5.61032 3.75 5.80109 3.75 6C3.75 6.19891 3.82902 6.38968 3.96967 6.53033C4.11032 6.67098 4.30109 6.75 4.5 6.75ZM9.75 17.25H4.5C4.30109 17.25 4.11032 17.329 3.96967 17.4697C3.82902 17.6103 3.75 17.8011 3.75 18C3.75 18.1989 3.82902 18.3897 3.96967 18.5303C4.11032 18.671 4.30109 18.75 4.5 18.75H9.75C9.94891 18.75 10.1397 18.671 10.2803 18.5303C10.421 18.3897 10.5 18.1989 10.5 18C10.5 17.8011 10.421 17.6103 10.2803 17.4697C10.1397 17.329 9.94891 17.25 9.75 17.25ZM21.5306 15.2194C21.461 15.1496 21.3783 15.0943 21.2872 15.0566C21.1962 15.0188 21.0986 14.9994 21 14.9994C20.9014 14.9994 20.8038 15.0188 20.7128 15.0566C20.6217 15.0943 20.539 15.1496 20.4694 15.2194L18 17.6897V10.5C18 10.3011 17.921 10.1103 17.7803 9.96967C17.6397 9.82902 17.4489 9.75 17.25 9.75C17.0511 9.75 16.8603 9.82902 16.7197 9.96967C16.579 10.1103 16.5 10.3011 16.5 10.5V17.6897L14.0306 15.2194C13.8899 15.0786 13.699 14.9996 13.5 14.9996C13.301 14.9996 13.1101 15.0786 12.9694 15.2194C12.8286 15.3601 12.7496 15.551 12.7496 15.75C12.7496 15.949 12.8286 16.1399 12.9694 16.2806L16.7194 20.0306C16.789 20.1004 16.8717 20.1557 16.9628 20.1934C17.0538 20.2312 17.1514 20.2506 17.25 20.2506C17.3486 20.2506 17.4462 20.2312 17.5372 20.1934C17.6283 20.1557 17.711 20.1004 17.7806 20.0306L21.5306 16.2806C21.6004 16.211 21.6557 16.1283 21.6934 16.0372C21.7312 15.9462 21.7506 15.8486 21.7506 15.75C21.7506 15.6514 21.7312 15.5538 21.6934 15.4628C21.6557 15.3717 21.6004 15.289 21.5306 15.2194Z"
+                          fill="#5D5D5D"
+                        />
+                      </svg>
+                    </button>
                     <span className="text-[#C1C1C1] text-base">Sort</span>
                   </div>
                 </div>
@@ -106,16 +210,16 @@ export default function APIsPage() {
             {/* Sub Header */}
             <div className="bg-[#050505] border border-[#232323] border-t-0 border-b-0 px-6 py-2">
               <span className="text-[#C1C1C1] text-base font-medium">
-                Total APIs 2
+                Total APIs {apiKeys.length}
               </span>
             </div>
 
             {/* APIs List Container */}
             <div className="bg-[#080808] border border-[#191919] rounded-b-[20px] p-6">
               <div className="space-y-4">
-                {apisData.map((api, index) => (
+                {filteredApiKeys.map((key) => (
                   <div
-                    key={index}
+                    key={key.id}
                     className="bg-transparent border border-[#232323] rounded-[20px] p-4"
                   >
                     <div className="flex items-center justify-between">
@@ -123,25 +227,25 @@ export default function APIsPage() {
                       <div className="flex items-center gap-12">
                         <div className="w-44">
                           <span className="text-[#C1C1C1] text-sm font-medium line-clamp-1">
-                            {api.name}
+                            {key.api_name}
                           </span>
                         </div>
 
                         <div className="w-56">
                           <span className="text-[#8F8F8F] text-xs font-medium">
-                            Created: {api.created}
+                            Created: {key.created_at}
                           </span>
                         </div>
 
                         <div className="w-28">
                           <span className="text-[#8F8F8F] text-xs font-medium">
-                            Last Used: {api.lastUsed}
+                            Last Used: {key.last_used}
                           </span>
                         </div>
 
                         <div className="w-28 text-center">
                           <span className="text-[#8F8F8F] text-xs font-medium">
-                            Inferences: {api.inferences}
+                            Inferences: {key.calls}
                           </span>
                         </div>
                       </div>
@@ -149,7 +253,10 @@ export default function APIsPage() {
                       {/* Action Buttons */}
                       <div className="flex items-center gap-3">
                         {/* Copy Button */}
-                        <button className="flex items-center gap-2 bg-[#232323] px-4 py-2 rounded-[20px] hover:bg-[#2B2B2B] transition-colors">
+                        <button
+                          onClick={() => handleCopyApiKey(key.api_key)}
+                          className="flex items-center gap-2 bg-[#232323] px-4 py-2 rounded-[20px] hover:bg-[#2B2B2B] transition-colors"
+                        >
                           <svg
                             width="16"
                             height="16"
@@ -168,7 +275,10 @@ export default function APIsPage() {
                         </button>
 
                         {/* Revoke Button */}
-                        <button className="flex items-center gap-2 bg-[#232323] px-4 py-2 rounded-[20px] hover:bg-[#2B2B2B] transition-colors">
+                        <button
+                          onClick={() => handleRevokeApiKey(key.api_key)}
+                          className="flex items-center gap-2 bg-[#232323] px-4 py-2 rounded-[20px] hover:bg-[#2B2B2B] transition-colors"
+                        >
                           <svg
                             width="16"
                             height="16"
@@ -200,6 +310,41 @@ export default function APIsPage() {
             </div>
           </div>
         </div>
+
+        {/* Modal for Generating API Key */}
+        {isModalOpen && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-[#080808] border border-[#232323] rounded-[20px] p-6 w-96">
+              <h2 className="text-xl font-normal text-[#F5F5F5] mb-4">
+                Generate API Key
+              </h2>
+              <input
+                type="text"
+                value={apiName}
+                onChange={(e) => setApiName(e.target.value)}
+                placeholder="Enter API name"
+                className="w-full bg-[#191919] text-[#5D5D5D] px-4 py-2 rounded-[20px] mb-4 outline-none"
+              />
+              <div className="flex justify-end gap-4">
+                <button
+                  onClick={() => {
+                    setIsModalOpen(false);
+                    setApiName("");
+                  }}
+                  className="bg-[#232323] text-[#F5F5F5] px-6 py-2 rounded-[20px] hover:bg-[#2B2B2B] transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleGenerateApi}
+                  className="bg-[#232323] text-[#F5F5F5] px-6 py-2 rounded-[20px] font-semibold hover:bg-[#2B2B2B] transition-colors"
+                >
+                  Generate API Key
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
