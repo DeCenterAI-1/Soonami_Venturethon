@@ -102,7 +102,7 @@ export default function Dashboard() {
             {/* Hero Section */}
             <div className="relative bg-[#050505] border border-[#232323] rounded-[20px] p-6 overflow-hidden">
               <div className="relative z-10 max-w-2xl">
-                <h1 className="text-4xl font-normal text-[#F5F5F5] lowercase leading-normal mb-4">
+                <h1 className="text-4xl font-normal text-[#F5F5F5] leading-normal mb-4">
                   Deploy AI Agents to your apps instantly.
                 </h1>
                 <p className="text-base text-[#C1C1C1] leading-6 max-w-xl">
@@ -111,7 +111,7 @@ export default function Dashboard() {
               </div>
               
               {/* Rocket Image */}
-              <div className="absolute -right-20 -top-20 w-96 h-96 opacity-60">
+              <div className="absolute -right-8 -top-20 w-96 h-96 opacity-60">
                 <img 
                   src="https://api.builder.io/api/v1/image/assets/TEMP/a7577eabdf9a761e11b09e16a53a4a2e20d15f87?width=925"
                   alt="Rocket"

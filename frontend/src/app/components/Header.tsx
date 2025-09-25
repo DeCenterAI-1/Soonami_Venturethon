@@ -1,13 +1,11 @@
 "use client";
 
-import { generatePayload, verifyPayload } from "@/actions/auth";
 import { client } from "@/lib/thirdweb";
+import { amoyTestnet, titanAITestnet, torusMainnet } from "@/utils/chains";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
-import { defineChain } from "thirdweb";
-import { signLoginPayload } from "thirdweb/auth";
+
 import { ConnectButton, useActiveAccount } from "thirdweb/react";
-import { Account } from "thirdweb/wallets";
 
 export default function Header() {
   const account = useActiveAccount();
@@ -54,7 +52,33 @@ export default function Header() {
               </span> */}
 
               {/* Connect Button */}
-              <ConnectButton client={client} />
+              <ConnectButton
+                client={client}
+                chains={[torusMainnet, titanAITestnet, amoyTestnet]}
+                supportedTokens={{
+                  [titanAITestnet.id]: [
+                    {
+                      address: "0x8bcEac95cb3AAF12358Dde73c16bB293f4b028C1",
+                      name: "Unreal Token",
+                      symbol: "UNREAL",
+                    },
+                  ],
+                  [torusMainnet.id]: [
+                    {
+                      address: "0xA409B5E5D34928a0F1165c7a73c8aC572D1aBCDB",
+                      name: "Unreal Token",
+                      symbol: "UNREAL",
+                    },
+                  ],
+                  [amoyTestnet.id]: [
+                    {
+                      address: "0x535D9D557f15ff50E46D51a6726C1Eb5FAf9D326",
+                      name: "Unreal Token",
+                      symbol: "UNREAL",
+                    },
+                  ],
+                }}
+              />
             </div>
 
             {/* Dropdown Arrow */}
