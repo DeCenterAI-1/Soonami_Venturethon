@@ -255,19 +255,22 @@ export default function APIsPage() {
 
                           <div className="w-56">
                             <span className="text-[#8F8F8F] text-xs font-medium">
-                              Created: {key.created_at}
+                              Created:{" "}
+                              {key.created_at
+                                ? new Date(key.created_at).toLocaleDateString()
+                                : ""}
                             </span>
                           </div>
 
                           <div className="w-28">
                             <span className="text-[#8F8F8F] text-xs font-medium">
-                              Last Used: {key.last_used}
+                              Chain Id: {key.chain_id}
                             </span>
                           </div>
 
                           <div className="w-28 text-center">
                             <span className="text-[#8F8F8F] text-xs font-medium">
-                              Inferences: {key.calls}
+                              Calls: {key.calls}
                             </span>
                           </div>
                         </div>

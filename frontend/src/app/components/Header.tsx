@@ -54,25 +54,11 @@ export default function Header() {
               {/* Connect Button */}
               <ConnectButton
                 client={client}
-                chains={[torusMainnet, titanAITestnet, amoyTestnet]}
+                chain={titanAITestnet}
                 supportedTokens={{
                   [titanAITestnet.id]: [
                     {
                       address: "0x8bcEac95cb3AAF12358Dde73c16bB293f4b028C1",
-                      name: "Unreal Token",
-                      symbol: "UNREAL",
-                    },
-                  ],
-                  [torusMainnet.id]: [
-                    {
-                      address: "0xA409B5E5D34928a0F1165c7a73c8aC572D1aBCDB",
-                      name: "Unreal Token",
-                      symbol: "UNREAL",
-                    },
-                  ],
-                  [amoyTestnet.id]: [
-                    {
-                      address: "0x535D9D557f15ff50E46D51a6726C1Eb5FAf9D326",
                       name: "Unreal Token",
                       symbol: "UNREAL",
                     },
