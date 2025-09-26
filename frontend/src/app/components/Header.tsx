@@ -54,7 +54,7 @@ export default function Header() {
               {/* Connect Button */}
               <ConnectButton
                 client={client}
-                chain={torusMainnet}
+                chain={titanAITestnet}
                 supportedTokens={{
                   [titanAITestnet.id]: [
                     {
