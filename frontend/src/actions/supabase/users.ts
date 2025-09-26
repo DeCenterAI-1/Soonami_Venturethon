@@ -87,11 +87,11 @@ export const updateUser = async (userWallet: string, user: UserType) => {
 export const updateUserProfile = async (
   wallet: string,
   updates: {
-    firstname?: string;
-    lastname?: string;
-    username?: string;
-    email?: string;
-    bio?: string;
+    firstname?: string | null;
+    lastname?: string | null;
+    username?: string | null;
+    email?: string | null;
+    bio?: string | null;
     profile_image?: string | File | null;
   }
 ) => {

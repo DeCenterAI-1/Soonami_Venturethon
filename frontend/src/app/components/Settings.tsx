@@ -97,11 +97,11 @@ export default function Settings() {
     }
 
     const cleanedData = {
-      firstname: formData.firstname || undefined,
-      lastname: formData.lastname || undefined,
-      username: formData.username || undefined,
-      email: formData.email || undefined,
-      bio: formData.bio || undefined,
+      firstname: formData.firstname || null,
+      lastname: formData.lastname || null,
+      username: formData.username || null,
+      email: formData.email || null,
+      bio: formData.bio || null,
       profile_image: formData.profile_image,
     };
 
@@ -242,8 +242,8 @@ export default function Settings() {
 
       {/* Edit Profile Modal */}
       {showEditProfile && (
-        <div className="fixed inset-0 bg-[rgba(5,5,5,0.5)] backdrop-blur-[3px] flex items-center justify-center z-50">
-          <div className="w-[520px] bg-[#191919] border border-[#232323] rounded-[20px] p-6 backdrop-blur-[7.5px]">
+        <div className="fixed inset-0 bg-[rgba(5,5,5,0.5)] backdrop-blur-[3px] flex items-center justify-center z-50 overflow-auto">
+          <div className="w-full max-w-[520px] bg-[#191919] border border-[#232323] rounded-[20px] p-6 backdrop-blur-[7.5px] md:p-8">
             {/* Modal Header */}
             <div className="flex items-center justify-between mb-9">
               <h2 className="text-[#F5F5F5] text-2xl font-bold leading-8">
