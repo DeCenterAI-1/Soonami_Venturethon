@@ -2,9 +2,10 @@
 
 import { getUserByWallet } from "@/actions/supabase/users";
 import { supabase } from "@/lib/supabase";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { toast } from "react-toastify";
 import { useActiveAccount } from "thirdweb/react";
+import { models } from "@/utils/models";
 
 interface ChatMessage {
   id: number;
@@ -19,6 +20,9 @@ export default function Playground() {
   const [loading, setLoading] = useState(false);
   const [userId, setUserId] = useState<number | null>(null);
   const [unrealToken, setUnrealToken] = useState<string | null>(null);
+  const [selectedModel, setSelectedModel] = useState("mixtral-8x22b-instruct"); // Default model
+
+  const chatEndRef = useRef<HTMLDivElement>(null); // Ref for auto-scroll
 
   const userAccount = useActiveAccount();
 
@@ -45,28 +49,37 @@ export default function Playground() {
         .from("chat_history")
         .select("*")
         .eq("user", userId)
-        .order("created_at", { ascending: false })
+        .order("created_at", { ascending: true })
         .limit(5);
 
       if (error) throw error;
       setMessages(data || []);
     } catch (error) {
+      console.error("Fetch chat history error", error);
       toast.error("Failed to fetch chat history");
     }
   };
 
   // Save message to Supabase
-  const saveMessageToDb = async (userMessage: string, aiResponse: string) => {
+  const saveMessageToDb = async (
+    userMessage: string,
+    aiResponse: string,
+    model: string,
+    object: string
+  ) => {
     if (!userId) return;
     try {
       const { error } = await supabase.from("chat_history").insert({
         user: userId,
         user_message: userMessage,
         ai_response: aiResponse,
+        model,
+        object,
       });
       if (error) throw error;
       await fetchChatHistory(userId); // Refresh history
     } catch (error) {
+      console.error("Error saving chat history", error);
       toast.error("Failed to save chat history");
     }
   };
@@ -88,7 +101,7 @@ export default function Playground() {
             Authorization: `Bearer ${unrealToken}`,
           },
           body: JSON.stringify({
-            model: "unreal::mixtral-8x22b-instruct",
+            model: `unreal::${selectedModel}`,
             messages: [{ role: "user", content: input }],
             stream: false,
           }),
@@ -102,8 +115,10 @@ export default function Playground() {
 
       const data = await response.json();
       const aiContent = data.choices[0]?.message?.content || "No response";
+      const responseModel = data.model || selectedModel;
+      const responseObject = data.object || "chat.completion";
 
-      await saveMessageToDb(input, aiContent);
+      await saveMessageToDb(input, aiContent, responseModel, responseObject);
       setInput("");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "An error occurred");
@@ -111,6 +126,11 @@ export default function Playground() {
       setLoading(false);
     }
   };
+
+  // Auto-scroll to the bottom when messages update
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
 
   return (
     <div className="flex-1 bg-[#050505] min-h-screen">
@@ -126,6 +146,22 @@ export default function Playground() {
             </div>
           </div>
 
+          {/* Model Selection */}
+          <div className="flex mb-4 gap-4">
+            <p className="text-[#F5F5F5] my-auto">Model: </p>
+            <select
+              value={selectedModel}
+              onChange={(e) => setSelectedModel(e.target.value)}
+              className="h-14 px-4 bg-transparent border border-[#232323] rounded-[20px] text-[#8F8F8F] text-sm focus:border-[#494949] focus:outline-none"
+            >
+              {models.map((model) => (
+                <option key={model.id} value={model.id}>
+                  {model.id}
+                </option>
+              ))}
+            </select>
+          </div>
+
           {/* Chat History */}
           <div className="flex flex-col gap-4 mb-6 p-4 bg-[#191919] border border-[#232323] rounded-[20px] h-96 overflow-y-auto">
             {messages.map((msg) => (
@@ -138,6 +174,7 @@ export default function Playground() {
                 </div>
               </div>
             ))}
+            <div ref={chatEndRef} />
           </div>
 
           {/* Input and Submit */}
