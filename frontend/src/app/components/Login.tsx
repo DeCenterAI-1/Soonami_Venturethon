@@ -152,7 +152,7 @@ export default function Login() {
               </svg>
               {/* Connect Button */}
               <ConnectButton
-                chain={titanAITestnet}
+                chain={torusMainnet}
                 client={client}
                 connectButton={{
                   label: "Sign in with Wallet",
