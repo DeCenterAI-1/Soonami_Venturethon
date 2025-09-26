@@ -2,6 +2,7 @@
 
 import { supabase } from "@/lib/supabase";
 import { UserType } from "@/utils/types";
+import { revalidatePath } from "next/cache";
 
 export const getUserByWallet = async (userWallet: string) => {
   try {
@@ -79,6 +80,98 @@ export const updateUser = async (userWallet: string, user: UserType) => {
     return {
       success: false,
       message: error instanceof Error ? error.message : "Something went wrong.",
+    };
+  }
+};
+
+export const updateUserProfile = async (
+  wallet: string,
+  updates: {
+    firstname?: string | null;
+    lastname?: string | null;
+    username?: string | null;
+    email?: string | null;
+    bio?: string | null;
+    profile_image?: string | File | null;
+  }
+) => {
+  try {
+    if (!wallet) {
+      throw new Error("Wallet address is required");
+    }
+
+    const { data: user, error: fetchError } = await supabase
+      .from("user_profiles")
+      .select("id")
+      .eq("wallet", wallet)
+      .single();
+
+    if (fetchError || !user) {
+      throw new Error(fetchError?.message || "User not found");
+    }
+
+    let profileImageUrl: string | undefined = updates.profile_image as string;
+
+    // Handle image upload if provided as a File
+    if (updates.profile_image instanceof File) {
+      const file = updates.profile_image;
+      const fileExt = file.name.split(".").pop();
+      const fileName = `${Date.now()}_${wallet}.${fileExt}`;
+      const fileSizeMB = file.size / (1024 * 1024);
+
+      if (fileSizeMB > 1) {
+        throw new Error("Image size must not exceed 5MB");
+      }
+
+      if (
+        !["jpg", "jpeg", "png", "gif"].includes(fileExt?.toLowerCase() || "")
+      ) {
+        throw new Error("Only image files (jpg, jpeg, png, gif) are allowed");
+      }
+
+      const { error: uploadError } = await supabase.storage
+        .from("profile_images")
+        .upload(`profile_images/${fileName}`, file, {
+          contentType: file.type,
+          upsert: true,
+        });
+
+      if (uploadError) {
+        throw new Error(`Failed to upload image: ${uploadError.message}`);
+      }
+
+      const { data: storageData } = supabase.storage
+        .from("profile_images")
+        .getPublicUrl(`profile_images/${fileName}`);
+      profileImageUrl = storageData.publicUrl;
+    }
+
+    const { error: updateError } = await supabase
+      .from("user_profiles")
+      .update({
+        firstname: updates.firstname,
+        lastname: updates.lastname,
+        username: updates.username,
+        email: updates.email,
+        bio: updates.bio,
+        profile_image: profileImageUrl,
+      })
+      .eq("wallet", wallet);
+
+    if (updateError) {
+      throw new Error(`Failed to update user: ${updateError.message}`);
+    }
+
+    revalidatePath("/settings");
+    return { success: true };
+  } catch (error) {
+    console.error(
+      "Error updating user:",
+      error instanceof Error ? error.message : error
+    );
+    return {
+      success: false,
+      message: error instanceof Error ? error.message : "Failed to update user",
     };
   }
 };
