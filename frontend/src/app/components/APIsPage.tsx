@@ -46,7 +46,7 @@ export default function APIsPage() {
 
       console.log("Unreal Api keys", unrealKeysRes);
 
-      if (unrealKeysRes.data) {
+      if (unrealKeysRes.data && unrealKeysRes.data.length) {
         // Sync with Supabase
         const syncRes = await syncApiKeysWithUnreal(userId, unrealKeysRes.data);
         if (!syncRes.success) {

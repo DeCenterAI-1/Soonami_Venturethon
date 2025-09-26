@@ -40,7 +40,7 @@ export default function Login() {
           iss: account.address,
           iat: Math.floor(Date.now() / 1000), // Current timestamp in seconds
           exp: Math.floor(Date.now() / 1000) + 3600, // Expires in 1 hour (adjust)
-          calls: 50, // Initial calls (per API schema)
+          calls: 100, // Initial calls (per API schema)
           paymentToken: unRealPaymentToken,
           sub: unRealOpenaiAddress,
         };
@@ -152,7 +152,7 @@ export default function Login() {
               </svg>
               {/* Connect Button */}
               <ConnectButton
-                chain={torusMainnet}
+                chain={titanAITestnet}
                 client={client}
                 connectButton={{
                   label: "Sign in with Wallet",
