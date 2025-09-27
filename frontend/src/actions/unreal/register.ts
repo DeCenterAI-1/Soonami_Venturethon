@@ -27,19 +27,13 @@ export const registerUnrealApiAccess = async (
 
     if (!response.ok) {
       const errorData = await response.json();
-      console.log(
-        "Unreal registration error",
-        errorData?.error,
-        errorData?.detail
-      );
-      throw new Error(errorData.error || "Registration failed");
+      console.log("Unreal registration error", errorData);
+      throw new Error(errorData.error || "Unreal Registration failed");
     }
 
     const data = await response.json();
 
     console.log("Unreal registration data", data);
-
-    if (data.error) throw new Error(data.error);
 
     const unrealToken = data.token;
     return {
@@ -47,10 +41,7 @@ export const registerUnrealApiAccess = async (
       unrealToken,
     };
   } catch (error) {
-    console.log(
-      "Error register Unreal API",
-      error instanceof Error ? error.message : "Something went wrong"
-    );
+    console.log("Error register Unreal API", error);
     return {
       success: false,
       error,

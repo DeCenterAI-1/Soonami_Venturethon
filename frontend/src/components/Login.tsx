@@ -1,22 +1,15 @@
 "use client";
 
-import { registerUnrealApiAccess } from "@/actions/unreal/register";
-import { getUserByWallet, updateUser } from "@/actions/supabase/users";
-import { client } from "@/lib/thirdweb";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import {
-  ConnectButton,
   useActiveAccount,
   useActiveWallet,
   useDisconnect,
 } from "thirdweb/react";
-import { Account } from "thirdweb/wallets";
-import { amoyTestnet, titanAITestnet, torusMainnet } from "@/utils/chains";
-import { toast } from "react-toastify";
 
-const unRealPaymentToken = process.env.NEXT_PUBLIC_UNREAL_PAYMENT_TOKEN!;
-const unRealOpenaiAddress = process.env.NEXT_PUBLIC_UNREAL_OPENAI_ADDRESS!;
+import { signAndRegisterAccount } from "@/services/auth";
+import { ConnectWalletButton } from "./auth/ConnectWalletButton";
 
 export default function Login() {
   const account = useActiveAccount();
@@ -24,77 +17,18 @@ export default function Login() {
   const { disconnect } = useDisconnect();
   const router = useRouter();
 
-  async function signAndRegisterAccount(account: Account) {
-    if (!account) {
-      toast.error("Please connect your wallet");
-      return false; // Indicate failure
-    }
-
-    try {
-      // Create or Get User from Supabase
-      const userRes = await getUserByWallet(account.address);
-      if (!userRes.success) throw new Error("Get user by wallet failed.");
-
-      if (!userRes.data.unreal_token) {
-        const payload = {
-          iss: account.address,
-          iat: Math.floor(Date.now() / 1000), // Current timestamp in seconds
-          exp: Math.floor(Date.now() / 1000) + 3600, // Expires in 1 hour (adjust)
-          calls: 100, // Initial calls (per API schema)
-          paymentToken: unRealPaymentToken,
-          sub: unRealOpenaiAddress,
-        };
-
-        const jsonPayload = JSON.stringify(payload);
-
-        const signature = await account.signMessage({
-          message: JSON.stringify(payload),
-        });
-
-        console.log("Sign Message Signature", signature);
-
-        // Register Unreal API Accress
-        const unrealRegisterRes = await registerUnrealApiAccess(
-          jsonPayload,
-          account.address,
-          signature
-        );
-
-        if (!unrealRegisterRes.success) {
-          throw new Error("Unreal API registration failed");
-        }
-
-        const { unrealToken } = unrealRegisterRes;
-
-        await updateUser(account.address, { unreal_token: unrealToken });
-      }
-      return true; // Indicate success
-    } catch (error) {
-      console.error(
-        "Error in Sign-in And Register Account:",
-        error instanceof Error ? error.message : "Unknown error"
-      );
-      // Disconnect wallet on error
-      if (wallet) {
-        await disconnect(wallet);
-      }
-
-      toast.error(
-        error instanceof Error
-          ? error.message
-          : "An error occurred during login."
-      ); // Error message
-
-      return false; // Indicate failure
-    }
-  }
+  const chainId = wallet?.getChain()?.id;
 
   useEffect(() => {
     if (account) {
-      console.log(account);
-      signAndRegisterAccount(account).then((success) => {
+      signAndRegisterAccount(account, chainId).then((success) => {
         if (success) {
-          router.push("/dashboard");
+          router.push("/agents");
+        } else {
+          // Disconnect wallet on error
+          if (wallet) {
+            disconnect(wallet);
+          }
         }
       });
     }
@@ -151,13 +85,7 @@ export default function Login() {
                 </defs>
               </svg>
               {/* Connect Button */}
-              <ConnectButton
-                chain={titanAITestnet}
-                client={client}
-                connectButton={{
-                  label: "Sign in with Wallet",
-                }}
-              />
+              <ConnectWalletButton />
             </div>
           </div>
         </div>

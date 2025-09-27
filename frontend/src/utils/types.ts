@@ -1,4 +1,13 @@
-// Interface for the Unreal API response
+// Interface for the Unreal API
+export interface UnrealRegistrationPayload {
+  iss: string;
+  iat: number;
+  exp: number;
+  calls: number;
+  paymentToken: string;
+  sub: string;
+}
+
 export interface UnrealApiKeyResponse {
   key: string;
   hash: string;
@@ -19,6 +28,13 @@ export interface UnrealApiKey {
   name: string;
   paymentToken: string;
   updatedAt: number;
+}
+
+export interface UnrealRegisterError {
+  error: string;
+  details?: string;
+  requiredBalance?: string;
+  balance?: string;
 }
 
 // Supabase
