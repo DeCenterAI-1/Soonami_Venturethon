@@ -16,6 +16,8 @@ import {
 } from "@/actions/supabase/api_keys";
 import { toast } from "react-toastify";
 import { ApiKey } from "@/utils/types";
+import { verifyUnrealAccessToken } from "@/actions/unreal/auth";
+import TokenInvalidMessage from "./TokenInvalidMessage";
 
 export default function APIsPage() {
   const userAccount = useActiveAccount();
@@ -24,6 +26,7 @@ export default function APIsPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [apiName, setApiName] = useState("");
   const [loading, setLoading] = useState(false);
+  const [isUnrealTokenValid, setIsUnrealTokenValid] = useState(true);
 
   const fetchAndSyncApiKeys = async () => {
     if (!userAccount?.address) return;
@@ -37,6 +40,15 @@ export default function APIsPage() {
         throw new Error("Failed to retrieve user ID");
       }
       const userId = userRes.data.id;
+      const unrealToken = userRes.data.unreal_token;
+
+      if (unrealToken) {
+        // Verify token
+        const verifyRes = await verifyUnrealAccessToken(unrealToken);
+        setIsUnrealTokenValid(verifyRes.success);
+      } else {
+        setIsUnrealTokenValid(false);
+      }
 
       // Fetch Unreal API keys
       const unrealKeysRes = await getAllUnrealApiKeys(userAccount.address);
@@ -150,6 +162,8 @@ export default function APIsPage() {
 
         {/* APIs Content */}
         <div className="flex-1 p-8 bg-[#191919]/15">
+          {!isUnrealTokenValid && <TokenInvalidMessage />}
+
           <div className="max-w-7xl mx-auto space-y-0">
             {/* Page Header */}
             <div className="bg-[#050505] border border-[#232323] rounded-t-[20px] border-b-0 p-6">

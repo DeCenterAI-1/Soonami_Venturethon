@@ -6,6 +6,8 @@ import { useState, useEffect, useRef } from "react";
 import { toast } from "react-toastify";
 import { useActiveAccount } from "thirdweb/react";
 import { models } from "@/utils/models";
+import TokenInvalidMessage from "./TokenInvalidMessage";
+import { verifyUnrealAccessToken } from "@/actions/unreal/auth";
 
 interface ChatMessage {
   id: number;
@@ -21,6 +23,7 @@ export default function Playground() {
   const [userId, setUserId] = useState<number | null>(null);
   const [unrealToken, setUnrealToken] = useState<string | null>(null);
   const [selectedModel, setSelectedModel] = useState("mixtral-8x22b-instruct"); // Default model
+  const [isUnrealTokenValid, setIsUnrealTokenValid] = useState(true);
 
   const chatEndRef = useRef<HTMLDivElement>(null); // Ref for auto-scroll
 
@@ -32,8 +35,18 @@ export default function Playground() {
       if (!userAccount?.address) return;
       const userRes = await getUserByWallet(userAccount.address);
       if (userRes.success && userRes.data) {
+        const unrealToken = userRes.data.unreal_token;
+
+        if (unrealToken) {
+          // Verify token
+          const verifyRes = await verifyUnrealAccessToken(unrealToken);
+          setIsUnrealTokenValid(verifyRes.success);
+        } else {
+          setIsUnrealTokenValid(false);
+        }
         setUserId(userRes.data.id);
         setUnrealToken(userRes.data.unreal_token);
+
         await fetchChatHistory(userRes.data.id);
       } else {
         toast.error("Failed to fetch user data");
@@ -134,6 +147,8 @@ export default function Playground() {
 
   return (
     <div className="flex-1 bg-[#050505] min-h-screen">
+      {!isUnrealTokenValid && <TokenInvalidMessage />}
+
       <div className="flex gap-6 p-8">
         {/* Main Content */}
         <div className="flex-1">

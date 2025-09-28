@@ -1,4 +1,4 @@
-import { registerUnrealApiAccess } from "@/actions/unreal/register";
+import { registerUnrealApiAccess } from "@/actions/unreal/auth";
 import { getUserByWallet, updateUser } from "@/actions/supabase/users";
 import { Account } from "thirdweb/wallets";
 import { toast } from "react-toastify";

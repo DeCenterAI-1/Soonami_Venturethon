@@ -8,7 +8,7 @@ export default function Home() {
 
   useEffect(() => {
     // Perform the redirect immediately
-    router.push("/dashboard");
+    router.push("/agents");
   }, [router]); // Include router in dependency array to satisfy linting rules
 
   // Return null to prevent rendering anything (avoids flash)
