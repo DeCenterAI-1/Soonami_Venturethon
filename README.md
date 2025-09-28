@@ -38,21 +38,26 @@ no infrastructure headaches, no expensive setup, just **smart integrations at a 
 - **Anyone Needing Fast, Reliable AI Integrations** – Get enterprise-grade AI without the infrastructure overhead.
 
 ---
-## 🛠️ Getting Started
-1. **Generate an API key** in the [AI Studio](#).  
-2. **Add credits** – only **$0.01 per inference**.  
-3. **Run your first prompt**  
-   - Call the API, or  
-   - Use the **no-code Studio** for a quick start.
+## 🔑 Generating an API Key
+
+Follow these steps to create and use your API key:
+
+1. **Sign in** with your wallet on https://decenter-ai-venturethon.vercel.app/ 
+2. Go to the **API** page.  
+3. Click **Generate API**, then enter the requested details.  
+4. Click **Generate**.  
+5. Your API key will be created in seconds—**copy and use it**.
 
 ---
-## 🤝 Get Involved
-DeCenter AI is building an **open, collaborative ecosystem**.  
-Contribute models, deploy agents, build integrations, or help shape the product through feedback and discussions.
 
-- [Contribute](https://github.com/DeCenter-AI/decenter-ai.streamlit.app/blob/main/README.md#contributors)  
-- [Report an Issue](https://github.com/DeCenter-AI/decenter-ai.streamlit.app/issues/new?assignees=&labels=bug&projects=&template=00-bug.md&title=bug%3A++)  
-- [Join the Discussion](https://t.me/decenteraicomchat)
+## 🧪 Testing Inference Capabilities
+
+To test the inferencing power of the DeCenter AI Network:
+
+1. Go to the **Playground** page.  
+2. Type in a **prompt**.  
+3. Hit **Send**.  
+4. Watch the AI model/agent respond in real time.
 
 ---
 
