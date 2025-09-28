@@ -86,6 +86,7 @@ export default function Settings() {
     },
   ];
 
+  // Submit user profile form
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -182,6 +183,15 @@ export default function Settings() {
     return emailRegex.test(email);
   };
 
+  // Convert Image file to ObjecUrl
+  const imageFileToObjectUrl = (file: File) => {
+    if (file) {
+      const objectUrl = URL.createObjectURL(file);
+      return objectUrl;
+    }
+    return "https://placehold.co/120"; // Return placeholder by default
+  };
+
   const fetchUserProfile = async () => {
     if (!userAccount) return;
     const userRes = await getUserByWallet(userAccount.address);
@@ -201,6 +211,15 @@ export default function Settings() {
       toast.error(userRes.message || "Failed to fetch user profile");
     }
   };
+
+  // Cleanup object URL on unmount or image change
+  useEffect(() => {
+    return () => {
+      if (formData.profile_image instanceof File) {
+        URL.revokeObjectURL(imageFileToObjectUrl(formData.profile_image));
+      }
+    };
+  }, [formData.profile_image]);
 
   // Fetch initial form data from user_profiles
   useEffect(() => {
@@ -279,7 +298,11 @@ export default function Settings() {
                   <div className="w-[120px] h-[120px] rounded-full border-[1.5px] border-[#494949] bg-gradient-to-br from-gray-400 to-gray-600 flex items-center justify-center text-white text-4xl font-medium">
                     {formData.profile_image ? (
                       <img
-                        src={formData.profile_image}
+                        src={
+                          formData.profile_image instanceof File
+                            ? imageFileToObjectUrl(formData.profile_image)
+                            : formData.profile_image
+                        }
                         alt="Profile"
                         className="w-full h-full rounded-full object-cover"
                       />

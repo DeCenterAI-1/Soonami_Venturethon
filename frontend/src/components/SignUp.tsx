@@ -1,4 +1,4 @@
-// Unused for Venturethon Demo
+// Unused in Venturethon Demo
 
 "use client";
 

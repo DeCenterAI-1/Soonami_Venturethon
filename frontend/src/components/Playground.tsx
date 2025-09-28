@@ -1,7 +1,6 @@
 "use client";
 
 import { getUserByWallet } from "@/actions/supabase/users";
-import { supabase } from "@/lib/supabase";
 import { useState, useEffect, useRef } from "react";
 import { toast } from "react-toastify";
 import { useActiveAccount } from "thirdweb/react";
@@ -9,6 +8,11 @@ import { models } from "@/utils/models";
 import TokenInvalidMessage from "./messages/TokenInvalidMessage";
 import { verifyUnrealAccessToken } from "@/actions/unreal/auth";
 import Spinner from "./ui/Spinner";
+import {
+  fetchChatHistory,
+  saveChatMessage,
+} from "@/actions/supabase/chat_history";
+import { getChatCompletion } from "@/actions/unreal/chat";
 
 interface ChatMessage {
   id: number;
@@ -31,73 +35,32 @@ export default function Playground() {
   const userAccount = useActiveAccount();
 
   // Fetch user ID and unreal_token
-  useEffect(() => {
-    const fetchUser = async () => {
-      if (!userAccount?.address) return;
-      const userRes = await getUserByWallet(userAccount.address);
-      if (userRes.success && userRes.data) {
-        const unrealToken = userRes.data.unreal_token;
+  const fetchUser = async () => {
+    if (!userAccount?.address) return;
+    const userRes = await getUserByWallet(userAccount.address);
+    if (userRes.success && userRes.data) {
+      const unrealToken = userRes.data.unreal_token;
 
-        if (unrealToken) {
-          // Verify token
-          const verifyRes = await verifyUnrealAccessToken(unrealToken);
-          setIsUnrealTokenValid(verifyRes.success);
-        } else {
-          setIsUnrealTokenValid(false);
-        }
-        setUserId(userRes.data.id);
-        setUnrealToken(userRes.data.unreal_token);
-
-        await fetchChatHistory(userRes.data.id);
+      if (unrealToken) {
+        // Verify token
+        const verifyRes = await verifyUnrealAccessToken(unrealToken);
+        setIsUnrealTokenValid(verifyRes.success);
       } else {
-        toast.error("Failed to fetch user data");
+        setIsUnrealTokenValid(false);
       }
-    };
-    fetchUser();
-  }, [userAccount]);
+      setUserId(userRes.data.id);
+      setUnrealToken(userRes.data.unreal_token);
 
-  // Fetch last 5 chats from Supabase
-  const fetchChatHistory = async (userId: number) => {
-    try {
-      const { data, error } = await supabase
-        .from("chat_history")
-        .select("*")
-        .eq("user", userId)
-        .order("created_at", { ascending: true })
-        .limit(5);
-
-      if (error) throw error;
-      setMessages(data || []);
-    } catch (error) {
-      console.error("Fetch chat history error", error);
-      toast.error("Failed to fetch chat history");
+      // Fetch last 5 chat history
+      await fetchChatHistory(userRes.data.id, 5).then((data) =>
+        setMessages(data)
+      );
+    } else {
+      toast.error("Failed to fetch user data");
     }
   };
 
-  // Save message to Supabase
-  const saveMessageToDb = async (
-    userMessage: string,
-    aiResponse: string,
-    model: string,
-    object: string
-  ) => {
-    if (!userId) return;
-    try {
-      const { error } = await supabase.from("chat_history").insert({
-        user: userId,
-        user_message: userMessage,
-        ai_response: aiResponse,
-        model,
-        object,
-      });
-      if (error) throw error;
-      await fetchChatHistory(userId); // Refresh history
-    } catch (error) {
-      console.error("Error saving chat history", error);
-      toast.error("Failed to save chat history");
-    }
-  };
-
+  // Send message to get completion from Unreal API
   const handleSendMessage = async () => {
     if (!input.trim() || !unrealToken) {
       toast.error("Invalid input or token");
@@ -106,40 +69,37 @@ export default function Playground() {
 
     setLoading(true);
     try {
-      const response = await fetch(
-        "https://openai.unreal.art/v1/chat/completions",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${unrealToken}`,
-          },
-          body: JSON.stringify({
-            model: `unreal::${selectedModel}`,
-            messages: [{ role: "user", content: input }],
-            stream: false,
-          }),
-        }
+      console.log(
+        `Get chat completion with model: ${selectedModel}, input: ${input}`
       );
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to get response");
-      }
+      const data = await getChatCompletion(unrealToken, selectedModel, input);
 
-      const data = await response.json();
       const aiContent = data.choices[0]?.message?.content || "No response";
       const responseModel = data.model || selectedModel;
       const responseObject = data.object || "chat.completion";
 
-      await saveMessageToDb(input, aiContent, responseModel, responseObject);
+      await saveChatMessage(
+        userId!,
+        input,
+        aiContent,
+        responseModel,
+        responseObject
+      );
       setInput("");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "An error occurred");
     } finally {
+      // Fetch last 5 chat history
+      await fetchChatHistory(userId!, 5).then((data) => setMessages(data));
       setLoading(false);
     }
   };
+
+  // Fetch user ID and unreal_token on page load
+  useEffect(() => {
+    fetchUser();
+  }, [userAccount]);
 
   // Auto-scroll to the bottom when messages update
   useEffect(() => {

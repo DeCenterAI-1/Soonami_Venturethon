@@ -2,18 +2,14 @@
 
 import { supabase } from "@/lib/supabase";
 import { getUserByWallet } from "../supabase/users";
-import { UnrealApiKey, UnrealApiKeyResponse } from "@/utils/types";
+import {
+  ApiKeyError,
+  GetAllApiKeysResponse,
+  UnrealApiKeyResponse,
+} from "@/utils/types";
+import { unrealApiUrl } from "@/utils/config";
 
-interface ApiKeyError {
-  error: string;
-}
-
-interface GetAllApiKeysResponse {
-  keys: UnrealApiKey[];
-}
-
-const unrealApiUrl = process.env.UNREAL_API_URL!;
-
+// Generate new Unreal API Key
 export const createUnrealApiKey = async (
   userWallet: string,
   apiName: string
@@ -113,6 +109,7 @@ export const createUnrealApiKey = async (
   }
 };
 
+// Get all user's API keys from Unreal API
 export const getAllUnrealApiKeys = async (userWallet: string) => {
   try {
     console.log("Getting all Unreal API keys for wallet", userWallet);
@@ -172,6 +169,7 @@ export const getAllUnrealApiKeys = async (userWallet: string) => {
   }
 };
 
+// Delete an user own Unreal API key by the key
 export const deleteApiKey = async (key: string, userWallet: string) => {
   try {
     console.log("Deleting Unreal API key", key, "for wallet", userWallet);

@@ -1,21 +1,18 @@
 "use server";
 
-const unrealApiUrl = process.env.UNREAL_API_URL!;
+import { unrealApiUrl } from "@/utils/config";
 
+// Register to Unreal API and get access token
 export const registerUnrealApiAccess = async (
   messagePayload: string,
   walletAddress: string,
   signature: string
 ) => {
   try {
-    // TODO Prepare permit payload
-    // TODO get permit signature
-    // TODO add permit and permit signature to Unreal registration payload
-
-    // Prepare payload as per Unreal AI API (adapt types/values as needed)
+    // Prepare payload for Unreal AI API registration
     const payload = JSON.parse(messagePayload);
 
-    // Prepare body
+    // Prepare request body
     const body = JSON.stringify({
       payload,
       signature,
@@ -25,7 +22,7 @@ export const registerUnrealApiAccess = async (
     console.log("Unreal registration body", body);
 
     // Send to Unreal AI API
-    const response = await fetch("https://openai.unreal.art/v1/auth/register", {
+    const response = await fetch(`${unrealApiUrl}/v1/auth/register`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body,
@@ -34,6 +31,7 @@ export const registerUnrealApiAccess = async (
     if (!response.ok) {
       const errorData = await response.json();
       console.log("Unreal registration error", errorData);
+
       throw new Error(errorData.error || "Unreal Registration failed");
     }
 
@@ -55,6 +53,7 @@ export const registerUnrealApiAccess = async (
   }
 };
 
+// Verify the validity of Unreal API access token
 export const verifyUnrealAccessToken = async (accessToken: string) => {
   try {
     const response = await fetch(

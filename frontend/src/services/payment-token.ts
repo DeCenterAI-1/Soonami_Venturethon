@@ -7,6 +7,7 @@ import {
   torusMainnetConfig,
 } from "@/utils/chains";
 
+// Get payment token address by Chain
 export function getPaymentTokenAddress(chainId: number): string {
   switch (chainId) {
     case torusMainnet.id:

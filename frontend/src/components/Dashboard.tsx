@@ -1,4 +1,4 @@
-// Display Dummy data, unused for Venturethon Demo
+// Display Dummy data, unused in Venturethon Demo
 
 "use client";
 

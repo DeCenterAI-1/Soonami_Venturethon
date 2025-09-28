@@ -13,20 +13,21 @@ import {
   syncApiKeysWithUnreal,
 } from "@/actions/supabase/api_keys";
 import { toast } from "react-toastify";
-import { ApiKey } from "@/utils/types";
+import { ApiKeyType } from "@/utils/types";
 import { verifyUnrealAccessToken } from "@/actions/unreal/auth";
 import TokenInvalidMessage from "./messages/TokenInvalidMessage";
 import Spinner from "./ui/Spinner";
 
 export default function APIsPage() {
   const userAccount = useActiveAccount();
-  const [apiKeys, setApiKeys] = useState<ApiKey[]>([]);
+  const [apiKeys, setApiKeys] = useState<ApiKeyType[]>([]);
   const [filter, setFilter] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [apiName, setApiName] = useState("");
   const [loading, setLoading] = useState(false);
   const [isUnrealTokenValid, setIsUnrealTokenValid] = useState(true);
 
+  // Fetch user'S API keys from Unreal API and sync with Supabase api_keys table
   const fetchAndSyncApiKeys = async () => {
     if (!userAccount?.address) return;
 
@@ -81,6 +82,7 @@ export default function APIsPage() {
     }
   };
 
+  // Generate an Unreal API key
   const handleGenerateApi = async () => {
     if (!userAccount?.address) {
       toast.error("Please connect your wallet");
@@ -110,11 +112,13 @@ export default function APIsPage() {
     }
   };
 
+  // Copy API key to clipboard
   const handleCopyApiKey = (apiKey: string) => {
     navigator.clipboard.writeText(apiKey);
     toast.success("API key copied to clipboard!");
   };
 
+  // Delete an API key from Unreal API and Supabase api_keys table
   const handleRevokeApiKey = async (apiKey: string) => {
     if (!userAccount?.address) {
       toast.error("Please connect your wallet");
@@ -137,10 +141,12 @@ export default function APIsPage() {
     }
   };
 
+  // Filter API key table by name
   const filteredApiKeys = apiKeys.filter((key) =>
     key.api_name?.toLowerCase().includes(filter.toLowerCase())
   );
 
+  // Fetch user's API keys on page load
   useEffect(() => {
     fetchAndSyncApiKeys();
   }, [userAccount]);
@@ -192,6 +198,8 @@ export default function APIsPage() {
                 </button>
 
                 {/* Sort Button */}
+                {/* TODO: To implemnt sorting feature in MVP */}
+
                 <div className="flex items-center gap-2 py-2 px-6">
                   <button disabled className="cursor-not-allowed">
                     <svg

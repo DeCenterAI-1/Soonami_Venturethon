@@ -1,11 +1,15 @@
 import { registerUnrealApiAccess } from "@/actions/unreal/auth";
-import { getUserByWallet, updateUser } from "@/actions/supabase/users";
+import {
+  getUserByWallet,
+  updateUserUnrealToken,
+} from "@/actions/supabase/users";
 import { Account } from "thirdweb/wallets";
 import { toast } from "react-toastify";
 import { UNREAL_REG_PAYLOAD_CONFIG } from "@/utils/config";
 import { UnrealRegistrationPayload } from "@/utils/types";
 import { getPaymentTokenAddress } from "./payment-token";
 
+// Sign registration payload and register to Unreal API
 export async function signAndRegisterAccount(
   account: Account,
   chainId: number | undefined
@@ -22,7 +26,14 @@ export async function signAndRegisterAccount(
 
     const unrealPaymentToken = getPaymentTokenAddress(chainId);
 
+    // If user does not have Unreal access token, register to Unreal API and get access token
     if (!userRes.data.unreal_token) {
+      // TODO Next improvements for MVP
+      // Send permit payload and permit signature with registration payload
+      // 1. Prepare permit payload
+      // 2. Sign permit payload and get permit signature
+      // 3. Send permit and permit signature with Unreal registration payload
+
       const payload: UnrealRegistrationPayload = {
         iss: account.address,
         iat: Math.floor(Date.now() / 1000), // Current timestamp in seconds
@@ -52,7 +63,8 @@ export async function signAndRegisterAccount(
       }
 
       if (unrealRegisterRes.unrealToken) {
-        await updateUser(account.address, {
+        // Update access token in Supabase users table
+        await updateUserUnrealToken(account.address, {
           unreal_token: unrealRegisterRes.unrealToken,
         });
       }
