@@ -1,9 +1,10 @@
 "use server";
 
 import { supabase } from "@/lib/supabase";
-import { UserType } from "@/utils/types";
+import { UserProfileType, UserUnrealTokenType } from "@/utils/types";
 import { revalidatePath } from "next/cache";
 
+// Get or create a user from Supabase users table by wallet address
 export const getUserByWallet = async (userWallet: string) => {
   try {
     // If the user wallet is present in the supabase database,
@@ -53,15 +54,23 @@ export const getUserByWallet = async (userWallet: string) => {
   }
 };
 
-export const updateUser = async (userWallet: string, user: UserType) => {
+// Update an user's unreal access token in Supabase users table by wallet address
+export const updateUserUnrealToken = async (
+  userWallet: string,
+  userUnrealToken: UserUnrealTokenType
+) => {
   try {
-    console.log("Update user in supabase", userWallet, user);
+    console.log(
+      "Update user unreal token in supabase",
+      userWallet,
+      userUnrealToken
+    );
 
     if (!userWallet) throw new Error("No user wallet provided");
 
     const { data, error } = await supabase
       .from("user_profiles")
-      .update(user)
+      .update(userUnrealToken)
       .eq("wallet", userWallet)
       .select("*");
 
@@ -84,16 +93,10 @@ export const updateUser = async (userWallet: string, user: UserType) => {
   }
 };
 
+// update an user profile (with profile image) in users table
 export const updateUserProfile = async (
   wallet: string,
-  updates: {
-    firstname?: string | null;
-    lastname?: string | null;
-    username?: string | null;
-    email?: string | null;
-    bio?: string | null;
-    profile_image?: string | File | null;
-  }
+  updates: UserProfileType
 ) => {
   try {
     if (!wallet) {

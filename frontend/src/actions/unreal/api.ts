@@ -2,16 +2,14 @@
 
 import { supabase } from "@/lib/supabase";
 import { getUserByWallet } from "../supabase/users";
-import { UnrealApiKey, UnrealApiKeyResponse } from "@/utils/types";
+import {
+  ApiKeyError,
+  GetAllApiKeysResponse,
+  UnrealApiKeyResponse,
+} from "@/utils/types";
+import { unrealApiUrl } from "@/utils/config";
 
-interface ApiKeyError {
-  error: string;
-}
-
-interface GetAllApiKeysResponse {
-  keys: UnrealApiKey[];
-}
-
+// Generate new Unreal API Key
 export const createUnrealApiKey = async (
   userWallet: string,
   apiName: string
@@ -43,8 +41,8 @@ export const createUnrealApiKey = async (
       throw new Error("No unreal_token found for the user");
     }
 
-    // Step 4: Call POST https://openai.unreal.art/v1/keys
-    const response = await fetch("https://openai.unreal.art/v1/keys", {
+    // Step 4: Call POST /v1/keys
+    const response = await fetch(`${unrealApiUrl}/v1/keys`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -111,6 +109,7 @@ export const createUnrealApiKey = async (
   }
 };
 
+// Get all user's API keys from Unreal API
 export const getAllUnrealApiKeys = async (userWallet: string) => {
   try {
     console.log("Getting all Unreal API keys for wallet", userWallet);
@@ -134,8 +133,8 @@ export const getAllUnrealApiKeys = async (userWallet: string) => {
       throw new Error("No unreal_token found for the user");
     }
 
-    // Step 3: Call GET https://openai.unreal.art/v1/keys
-    const response = await fetch("https://openai.unreal.art/v1/keys", {
+    // Step 3: Call GET /v1/keys
+    const response = await fetch(`${unrealApiUrl}/v1/keys`, {
       method: "GET",
       headers: {
         Authorization: `Bearer ${unrealToken}`,
@@ -170,6 +169,7 @@ export const getAllUnrealApiKeys = async (userWallet: string) => {
   }
 };
 
+// Delete an user own Unreal API key by the key
 export const deleteApiKey = async (key: string, userWallet: string) => {
   try {
     console.log("Deleting Unreal API key", key, "for wallet", userWallet);
@@ -193,8 +193,8 @@ export const deleteApiKey = async (key: string, userWallet: string) => {
       throw new Error("No unreal_token found for the user");
     }
 
-    // Step 3: Call DELETE https://openai.unreal.art/v1/keys/{key}
-    const response = await fetch(`https://openai.unreal.art/v1/keys/${key}`, {
+    // Step 3: Call DELETE /v1/keys/{key}
+    const response = await fetch(`${unrealApiUrl}/v1/keys/${key}`, {
       method: "DELETE",
       headers: {
         Authorization: `Bearer ${unrealToken}`,

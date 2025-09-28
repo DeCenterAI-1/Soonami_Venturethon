@@ -1,7 +1,7 @@
 import { defineChain } from "thirdweb";
 
 // Torus Mainnet configuration
-export const torusMainnet = defineChain({
+export const torusMainnetConfig = {
   id: 8192,
   name: "Torus Mainnet",
   nativeCurrency: {
@@ -27,10 +27,10 @@ export const torusMainnet = defineChain({
       },
     },
   },
-});
+};
 
 // Titan AI Testnet configuration
-export const titanAITestnet = defineChain({
+export const titanAITestnetConfig = {
   id: 1020352220,
   name: "Titan AI",
   nativeCurrency: {
@@ -60,10 +60,10 @@ export const titanAITestnet = defineChain({
       },
     },
   },
-});
+};
 
 // Polygon Amoy Testnet configuration
-export const amoyTestnet = defineChain({
+export const amoyTestnetConfig = {
   id: 80002,
   name: "Polygon Amoy",
   nativeCurrency: {
@@ -100,4 +100,8 @@ export const amoyTestnet = defineChain({
       },
     },
   },
-});
+};
+
+export const torusMainnet = defineChain(torusMainnetConfig);
+export const titanAITestnet = defineChain(titanAITestnetConfig);
+export const amoyTestnet = defineChain(amoyTestnetConfig);

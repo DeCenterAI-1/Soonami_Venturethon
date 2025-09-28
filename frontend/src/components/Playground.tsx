@@ -1,11 +1,18 @@
 "use client";
 
 import { getUserByWallet } from "@/actions/supabase/users";
-import { supabase } from "@/lib/supabase";
 import { useState, useEffect, useRef } from "react";
 import { toast } from "react-toastify";
 import { useActiveAccount } from "thirdweb/react";
 import { models } from "@/utils/models";
+import TokenInvalidMessage from "./messages/TokenInvalidMessage";
+import { verifyUnrealAccessToken } from "@/actions/unreal/auth";
+import Spinner from "./ui/Spinner";
+import {
+  fetchChatHistory,
+  saveChatMessage,
+} from "@/actions/supabase/chat_history";
+import { getChatCompletion } from "@/actions/unreal/chat";
 
 interface ChatMessage {
   id: number;
@@ -21,69 +28,39 @@ export default function Playground() {
   const [userId, setUserId] = useState<number | null>(null);
   const [unrealToken, setUnrealToken] = useState<string | null>(null);
   const [selectedModel, setSelectedModel] = useState("mixtral-8x22b-instruct"); // Default model
+  const [isUnrealTokenValid, setIsUnrealTokenValid] = useState(true);
 
   const chatEndRef = useRef<HTMLDivElement>(null); // Ref for auto-scroll
 
   const userAccount = useActiveAccount();
 
   // Fetch user ID and unreal_token
-  useEffect(() => {
-    const fetchUser = async () => {
-      if (!userAccount?.address) return;
-      const userRes = await getUserByWallet(userAccount.address);
-      if (userRes.success && userRes.data) {
-        setUserId(userRes.data.id);
-        setUnrealToken(userRes.data.unreal_token);
-        await fetchChatHistory(userRes.data.id);
+  const fetchUser = async () => {
+    if (!userAccount?.address) return;
+    const userRes = await getUserByWallet(userAccount.address);
+    if (userRes.success && userRes.data) {
+      const unrealToken = userRes.data.unreal_token;
+
+      if (unrealToken) {
+        // Verify token
+        const verifyRes = await verifyUnrealAccessToken(unrealToken);
+        setIsUnrealTokenValid(verifyRes.success);
       } else {
-        toast.error("Failed to fetch user data");
+        setIsUnrealTokenValid(false);
       }
-    };
-    fetchUser();
-  }, [userAccount]);
+      setUserId(userRes.data.id);
+      setUnrealToken(userRes.data.unreal_token);
 
-  // Fetch last 5 chats from Supabase
-  const fetchChatHistory = async (userId: number) => {
-    try {
-      const { data, error } = await supabase
-        .from("chat_history")
-        .select("*")
-        .eq("user", userId)
-        .order("created_at", { ascending: true })
-        .limit(5);
-
-      if (error) throw error;
-      setMessages(data || []);
-    } catch (error) {
-      console.error("Fetch chat history error", error);
-      toast.error("Failed to fetch chat history");
+      // Fetch last 5 chat history
+      await fetchChatHistory(userRes.data.id, 5).then((data) =>
+        setMessages(data)
+      );
+    } else {
+      toast.error("Failed to fetch user data");
     }
   };
 
-  // Save message to Supabase
-  const saveMessageToDb = async (
-    userMessage: string,
-    aiResponse: string,
-    model: string,
-    object: string
-  ) => {
-    if (!userId) return;
-    try {
-      const { error } = await supabase.from("chat_history").insert({
-        user: userId,
-        user_message: userMessage,
-        ai_response: aiResponse,
-        model,
-        object,
-      });
-      if (error) throw error;
-      await fetchChatHistory(userId); // Refresh history
-    } catch (error) {
-      console.error("Error saving chat history", error);
-      toast.error("Failed to save chat history");
-    }
-  };
-
+  // Send message to get completion from Unreal API
   const handleSendMessage = async () => {
     if (!input.trim() || !unrealToken) {
       toast.error("Invalid input or token");
@@ -92,40 +69,37 @@ export default function Playground() {
 
     setLoading(true);
     try {
-      const response = await fetch(
-        "https://openai.unreal.art/v1/chat/completions",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${unrealToken}`,
-          },
-          body: JSON.stringify({
-            model: `unreal::${selectedModel}`,
-            messages: [{ role: "user", content: input }],
-            stream: false,
-          }),
-        }
+      console.log(
+        `Get chat completion with model: ${selectedModel}, input: ${input}`
       );
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to get response");
-      }
+      const data = await getChatCompletion(unrealToken, selectedModel, input);
 
-      const data = await response.json();
       const aiContent = data.choices[0]?.message?.content || "No response";
       const responseModel = data.model || selectedModel;
       const responseObject = data.object || "chat.completion";
 
-      await saveMessageToDb(input, aiContent, responseModel, responseObject);
+      await saveChatMessage(
+        userId!,
+        input,
+        aiContent,
+        responseModel,
+        responseObject
+      );
       setInput("");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "An error occurred");
     } finally {
+      // Fetch last 5 chat history
+      await fetchChatHistory(userId!, 5).then((data) => setMessages(data));
       setLoading(false);
     }
   };
+
+  // Fetch user ID and unreal_token on page load
+  useEffect(() => {
+    fetchUser();
+  }, [userAccount]);
 
   // Auto-scroll to the bottom when messages update
   useEffect(() => {
@@ -134,6 +108,8 @@ export default function Playground() {
 
   return (
     <div className="flex-1 bg-[#050505] min-h-screen">
+      {!isUnrealTokenValid && <TokenInvalidMessage />}
+
       <div className="flex gap-6 p-8">
         {/* Main Content */}
         <div className="flex-1">
@@ -191,25 +167,7 @@ export default function Playground() {
               disabled={loading}
               className="px-6 py-3 bg-[#232323] rounded-[20px] text-[#F5F5F5] text-base font-semibold hover:bg-[#2B2B2B] transition-colors disabled:opacity-50"
             >
-              {loading ? (
-                <svg className="animate-spin h-5 w-5 mr-3" viewBox="0 0 24 24">
-                  <circle
-                    className="opacity-25"
-                    cx="12"
-                    cy="12"
-                    r="10"
-                    stroke="currentColor"
-                    strokeWidth="4"
-                  />
-                  <path
-                    className="opacity-75"
-                    fill="currentColor"
-                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                  />
-                </svg>
-              ) : (
-                "Send"
-              )}
+              {loading ? <Spinner /> : "Send"}
             </button>
           </div>
         </div>

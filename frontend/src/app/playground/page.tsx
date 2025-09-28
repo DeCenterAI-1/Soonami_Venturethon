@@ -1,6 +1,6 @@
-import Header from "../components/Header";
-import Playground from "../components/Playground";
-import Sidebar from "../components/Sidebar";
+import Header from "../../components/nav/Header";
+import Playground from "../../components/Playground";
+import Sidebar from "../../components/nav/Sidebar";
 
 export default function PlaygroundPage() {
   return (
