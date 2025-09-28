@@ -1,6 +1,6 @@
 import Billing from "../../components/Billing";
-import Header from "../../components/Header";
-import Sidebar from "../../components/Sidebar";
+import Header from "../../components/nav/Header";
+import Sidebar from "../../components/nav/Sidebar";
 
 export default function BillingPage() {
   return (

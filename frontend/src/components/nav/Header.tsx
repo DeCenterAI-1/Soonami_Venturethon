@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 
 import { useActiveAccount } from "thirdweb/react";
-import { ConnectWalletButton } from "./auth/ConnectWalletButton";
+import { ConnectWalletButton } from "../auth/ConnectWalletButton";
 
 export default function Header() {
   const account = useActiveAccount();
