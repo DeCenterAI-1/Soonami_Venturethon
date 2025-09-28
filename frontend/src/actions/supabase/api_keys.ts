@@ -3,6 +3,7 @@
 import { supabase } from "@/lib/supabase";
 import { UnrealApiKey } from "@/utils/types";
 
+// Sync all user's API keys with Unreal API and update api_keys table in Supabase
 export const syncApiKeysWithUnreal = async (
   userId: number,
   unrealApiKeys: UnrealApiKey[]
@@ -74,6 +75,7 @@ export const syncApiKeysWithUnreal = async (
   }
 };
 
+// Get all user's API keys from Supabase api_keys table
 export const getApiKeysByUser = async (userId: number) => {
   try {
     if (!userId) {

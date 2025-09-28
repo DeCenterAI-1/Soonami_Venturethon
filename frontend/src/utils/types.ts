@@ -1,4 +1,13 @@
-// Interface for the Unreal API response
+// Interface for the Unreal API
+export interface UnrealRegistrationPayload {
+  iss: string;
+  iat: number;
+  exp: number;
+  calls: number;
+  paymentToken: string;
+  sub: string;
+}
+
 export interface UnrealApiKeyResponse {
   key: string;
   hash: string;
@@ -21,17 +30,42 @@ export interface UnrealApiKey {
   updatedAt: number;
 }
 
-// Supabase
-export interface UserType {
-  name?: string;
-  email?: string;
-  unreal_token?: string;
-  calls?: number;
-  is_admin?: boolean;
-  is_active?: boolean;
+export interface UnrealRegisterError {
+  error: string;
+  details?: string;
+  requiredBalance?: string;
+  balance?: string;
 }
 
-export interface ApiKey {
+export interface ApiKeyError {
+  error: string;
+}
+
+export interface GetAllApiKeysResponse {
+  keys: UnrealApiKey[];
+}
+
+export interface ChatCompletionResponse {
+  choices: { message: { content: string } }[];
+  model: string;
+  object: string;
+}
+
+// Supabase
+export interface UserUnrealTokenType {
+  unreal_token: string;
+}
+
+export interface UserProfileType {
+  firstname?: string | null;
+  lastname?: string | null;
+  username?: string | null;
+  email?: string | null;
+  bio?: string | null;
+  profile_image?: string | File | null;
+}
+
+export interface ApiKeyType {
   id: number;
   created_at: string;
   user: number;
@@ -43,4 +77,14 @@ export interface ApiKey {
   calls: number | null;
   chain_id: number | null;
   last_used: string | null;
+}
+
+export interface ChatHistoryType {
+  id: number;
+  user_message: string;
+  ai_response: string;
+  created_at: string;
+  user: number;
+  model: string;
+  object: string;
 }
