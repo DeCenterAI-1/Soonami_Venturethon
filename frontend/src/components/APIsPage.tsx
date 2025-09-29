@@ -17,6 +17,7 @@ import { ApiKeyType } from "@/utils/types";
 import { verifyUnrealAccessToken } from "@/actions/unreal/auth";
 import TokenInvalidMessage from "./messages/TokenInvalidMessage";
 import Spinner from "./ui/Spinner";
+import RefreshCW from "./ui/RefreshCW";
 
 export default function APIsPage() {
   const userAccount = useActiveAccount();
@@ -197,11 +198,17 @@ export default function APIsPage() {
                   Generate API
                 </button>
 
+                {/* Refresh Button */}
+                <div className="flex items-center gap-2 py-2 px-6">
+                  <button onClick={fetchAndSyncApiKeys}>
+                    <RefreshCW />
+                  </button>
+                </div>
+
                 {/* Sort Button */}
                 {/* TODO: To implemnt sorting feature in MVP */}
-
-                <div className="flex items-center gap-2 py-2 px-6">
-                  <button disabled className="cursor-not-allowed">
+                {/* <div className="flex items-center gap-2 py-2 px-6">
+                  <button>
                     <svg
                       width="24"
                       height="24"
@@ -216,7 +223,7 @@ export default function APIsPage() {
                     </svg>
                   </button>
                   <span className="text-[#C1C1C1] text-base">Sort</span>
-                </div>
+                </div> */}
               </div>
             </div>
           </div>

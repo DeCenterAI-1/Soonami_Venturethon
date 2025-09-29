@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 
 import { useActiveAccount } from "thirdweb/react";
 import { ConnectWalletButton } from "../auth/ConnectWalletButton";
@@ -9,12 +9,20 @@ import { ConnectWalletButton } from "../auth/ConnectWalletButton";
 export default function Header() {
   const account = useActiveAccount();
   const router = useRouter();
+  const isInitialMount = useRef(true);
 
   useEffect(() => {
+    // Skip the check on initial mount to allow account to load
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      return;
+    }
+
+    // Only redirect if account is still undefined after initial load
     if (!account?.address) {
       router.push("/login");
     }
-  }, [account]);
+  }, [account, router]);
 
   return (
     <div className="w-full bg-[#050505]">
