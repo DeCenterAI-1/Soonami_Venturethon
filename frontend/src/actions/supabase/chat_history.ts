@@ -46,3 +46,20 @@ export const saveChatMessage = async (
     throw new Error("Failed to save chat history");
   }
 };
+
+// Delete all Chat History by User Id
+export const deleteAllChatHistory = async (userId: number): Promise<void> => {
+  try {
+    if (!userId) throw new Error("User is required");
+
+    const { error } = await supabase
+      .from("chat_history")
+      .delete()
+      .eq("user", userId);
+
+    if (error) throw error;
+  } catch (error) {
+    console.error("Error deleting all chat history", error);
+    throw new Error("Failed to delete chat messages");
+  }
+};
