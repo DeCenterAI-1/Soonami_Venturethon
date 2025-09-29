@@ -40,7 +40,10 @@ no infrastructure headaches, no expensive setup, just **smart integrations at a 
 ---
 ## 🔑 Generating an API Key
 
-Follow these steps to create and use your API key:
+Add the shared wallet using this Private Key to access the platform 
+0x411caf28d09f8ba5893906179b2fc520c4f123f7f8f4625b79362089676b49fe
+
+Then follow these steps to create and use your API key: 
 
 1. **Sign in** with your wallet on https://decenter-ai-venturethon.vercel.app/ 
 2. Go to the **API** page.  
