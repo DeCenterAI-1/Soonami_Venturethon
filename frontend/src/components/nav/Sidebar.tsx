@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import Link from "next/link";
+import SidebarLink from "./SidebarLink";
 
 const navigationItems = [
   // {
@@ -108,7 +108,7 @@ const navigationItems = [
 
 export default function Sidebar() {
   const path = usePathname();
-  console.log(path);
+
   return (
     <div className="w-[152px] h-screen bg-[#050505] flex flex-col">
       {/* Logo */}
@@ -125,27 +125,12 @@ export default function Sidebar() {
 
       {/* Navigation */}
       <div className="flex flex-col py-20 gap-7">
-        {navigationItems.map((item, index) => (
-          <Link
-            key={index}
-            href={item.href}
-            className={`flex flex-col items-center py-2 px-9 gap-2 cursor-pointer transition-colors ${
-              path === item.href ? "bg-[#191919]" : "hover:bg-[#191919]/50"
-            }`}
-          >
-            <div className="flex flex-col items-center gap-2">
-              <div className="w-6 h-6 flex items-center justify-center">
-                {item.icon}
-              </div>
-              <span
-                className={`text-base font-normal leading-6 ${
-                  path === item.href ? "text-[#F5F5F5]" : "text-[#5D5D5D]"
-                }`}
-              >
-                {item.name}
-              </span>
-            </div>
-          </Link>
+        {navigationItems.map((item) => (
+          <SidebarLink
+            key={item.href}
+            item={item}
+            isActive={path === item.href}
+          />
         ))}
       </div>
     </div>

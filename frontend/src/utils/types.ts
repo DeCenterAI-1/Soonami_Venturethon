@@ -1,4 +1,4 @@
-// Interface for the Unreal API
+// Unreal API
 export interface UnrealRegistrationPayload {
   iss: string;
   iat: number;
@@ -30,11 +30,23 @@ export interface UnrealApiKey {
   updatedAt: number;
 }
 
+export interface UnrealRegisterResponse {
+  success: boolean;
+  unrealToken?: string;
+  error?: string;
+}
+
 export interface UnrealRegisterError {
   error: string;
   details?: string;
   requiredBalance?: string;
   balance?: string;
+}
+
+export interface UnrealVerifyTokenResponse {
+  success: boolean;
+  data?: unknown;
+  message?: string;
 }
 
 export interface ApiKeyError {

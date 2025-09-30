@@ -10,7 +10,7 @@ export const getUserByWallet = async (userWallet: string) => {
     // If the user wallet is present in the supabase database,
     // then return the user, else create a new user and return the user
 
-    console.log("Get user from supabase", userWallet);
+    console.log("Get user from supabase by wallet:", userWallet);
 
     if (!userWallet) throw new Error("No user wallet provided");
 
@@ -46,7 +46,7 @@ export const getUserByWallet = async (userWallet: string) => {
       data: newUser[0],
     };
   } catch (error) {
-    console.log("Error getting / creating user from Supabase.", error);
+    console.error("Error getting / creating user from Supabase.", error);
     return {
       success: false,
       message: error instanceof Error ? error.message : "Something went wrong.",
@@ -85,7 +85,7 @@ export const updateUserUnrealToken = async (
       data: data[0],
     };
   } catch (error) {
-    console.log("Error updating user in Supabase.", error);
+    console.error("Error updating user in Supabase.", error);
     return {
       success: false,
       message: error instanceof Error ? error.message : "Something went wrong.",
