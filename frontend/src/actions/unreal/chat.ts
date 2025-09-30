@@ -10,6 +10,8 @@ export const getChatCompletion = async (
   message: string
 ): Promise<ChatCompletionResponse> => {
   try {
+    console.debug("Request chat completion", token, model, message);
+
     const response = await fetch(`${unrealApiUrl}/v1/chat/completions`, {
       method: "POST",
       headers: {

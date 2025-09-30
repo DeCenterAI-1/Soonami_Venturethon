@@ -105,3 +105,27 @@ export const amoyTestnetConfig = {
 export const torusMainnet = defineChain(torusMainnetConfig);
 export const titanAITestnet = defineChain(titanAITestnetConfig);
 export const amoyTestnet = defineChain(amoyTestnetConfig);
+
+// Map of chain IDs to defined chain objects
+const chainsById = {
+  [torusMainnet.id]: torusMainnet,
+  [titanAITestnet.id]: titanAITestnet,
+  [amoyTestnet.id]: amoyTestnet,
+} as const;
+
+// Map of chain IDs to configuration objects
+const chainConfigsById = {
+  [torusMainnetConfig.id]: torusMainnetConfig,
+  [titanAITestnetConfig.id]: titanAITestnetConfig,
+  [amoyTestnetConfig.id]: amoyTestnetConfig,
+} as const;
+
+// Function to get chain by ID
+export function getChainById(chainId: number) {
+  return chainsById[chainId] ?? null;
+}
+
+// Function to get chain configuration by ID
+export function getChainConfigById(chainId: number) {
+  return chainConfigsById[chainId] ?? null;
+}

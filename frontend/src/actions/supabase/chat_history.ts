@@ -13,11 +13,15 @@ export const fetchChatHistory = async (
       .from("chat_history")
       .select("*")
       .eq("user", userId)
-      .order("created_at", { ascending: true })
+      .order("created_at", { ascending: false })
       .limit(limit);
 
     if (error) throw error;
-    return data || [];
+
+    // Reverse data sorting from oldest to newest
+    const sortedData = data ? [...data].reverse() : [];
+
+    return sortedData || [];
   } catch (error) {
     console.error("Fetch chat history error", error);
     throw new Error("Failed to fetch chat history");

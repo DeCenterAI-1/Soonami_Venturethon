@@ -178,3 +178,31 @@ export const updateUserProfile = async (
     };
   }
 };
+
+// Function to delete unreal_token by wallet in user_profiles table
+export const deleteUnrealTokenByWallet = async (wallet: string) => {
+  try {
+    if (!wallet) {
+      throw new Error("Wallet address is required");
+    }
+
+    const { error } = await supabase
+      .from("user_profiles")
+      .update({ unreal_token: null }) // Set unreal_token to null to "delete" it
+      .eq("wallet", wallet); // Match the wallet address
+
+    if (error) {
+      throw error;
+    }
+    return { success: true };
+  } catch (error) {
+    console.error("Error delete unreal_token:", error);
+    return {
+      success: false,
+      message:
+        error instanceof Error
+          ? error.message
+          : "Failed to delete unreal_token",
+    };
+  }
+};
