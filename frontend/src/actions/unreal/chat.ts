@@ -3,7 +3,7 @@
 import { unrealApiUrl } from "@/utils/config";
 import { ChatCompletionResponse } from "@/utils/types";
 
-// Create a completion for a chat message via Unreal chat API
+// Request a chat completion from Unreal API
 export const getChatCompletion = async (
   token: string,
   model: string,
@@ -23,14 +23,22 @@ export const getChatCompletion = async (
       }),
     });
 
+    const data = await response.json();
+
     if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error || "Failed to get chat completion");
+      let errorMessage = data.error || "Failed to get chat completion";
+
+      if (data.price) {
+        errorMessage += `: Insufficient funds, requires at least ${data.price}`;
+      }
+
+      console.error("Error getting chat completion", data);
+      throw new Error(errorMessage);
     }
 
-    const data = await response.json();
-    console.log("Chat completion response data", data);
-    return data;
+    console.debug("Chat completion response data", data);
+
+    return data as ChatCompletionResponse;
   } catch (error) {
     console.error("Error getting chat completion:", error);
     throw new Error(

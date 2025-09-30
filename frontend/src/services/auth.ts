@@ -8,6 +8,8 @@ import { toast } from "react-toastify";
 import { UNREAL_REG_PAYLOAD_CONFIG } from "@/utils/config";
 import { UnrealRegistrationPayload } from "@/utils/types";
 import { getPaymentTokenAddress } from "./payment-token";
+import { preparePermitPayload, signPermitPayload } from "./permit";
+import { defineChain } from "thirdweb";
 
 // Sign registration payload and register to Unreal API
 export async function signAndRegisterAccount(
@@ -20,7 +22,7 @@ export async function signAndRegisterAccount(
   }
 
   try {
-    // Create or Get User from Supabase
+    // Create or Get User from Supabase by wallet address
     const userRes = await getUserByWallet(account.address);
     if (!userRes.success) throw new Error("Get user by wallet failed.");
 
@@ -28,12 +30,34 @@ export async function signAndRegisterAccount(
 
     // If user does not have Unreal access token, register to Unreal API and get access token
     if (!userRes.data.unreal_token) {
-      // TODO Next improvements for MVP
       // Send permit payload and permit signature with registration payload
-      // 1. Prepare permit payload
-      // 2. Sign permit payload and get permit signature
-      // 3. Send permit and permit signature with Unreal registration payload
+      // Step 1. Prepare permit payload
+      const amount =
+        BigInt(UNREAL_REG_PAYLOAD_CONFIG.CALLS_INITIAL) * BigInt(10 ** 18); // 18 decimals
 
+      const deadline =
+        Math.floor(Date.now() / 1000) +
+        UNREAL_REG_PAYLOAD_CONFIG.EXPIRY_SECONDS;
+
+      const { domain, permitTypes, permitMessage } = await preparePermitPayload(
+        account,
+        defineChain(chainId),
+        unrealPaymentToken,
+        UNREAL_REG_PAYLOAD_CONFIG.UNREAL_OPENAI_ADDRESS,
+        amount,
+        deadline
+      );
+
+      // Step 2. Sign permit payload and get permit signature
+      const permitSignature = await signPermitPayload(
+        account,
+        domain,
+        permitTypes,
+        permitMessage
+      );
+
+      // Step 3. Build and send Unreal registration payload with permit
+      // Unreal registration payload
       const payload: UnrealRegistrationPayload = {
         iss: account.address,
         iat: Math.floor(Date.now() / 1000), // Current timestamp in seconds
@@ -48,11 +72,15 @@ export async function signAndRegisterAccount(
       const jsonPayload = JSON.stringify(payload);
       const signature = await account.signMessage({ message: jsonPayload });
 
-      // Register Unreal API Accress Token
+      const jsonPermitMessage = JSON.stringify(permitMessage);
+
+      // Step 4. Register Unreal API Accress Token
       const unrealRegisterRes = await registerUnrealApiAccess(
         jsonPayload,
         account.address,
-        signature
+        signature,
+        jsonPermitMessage,
+        permitSignature
       );
 
       // Allow user to the API dashboard but notice that Unreal access token was not generated.

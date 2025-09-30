@@ -21,6 +21,7 @@ interface ChatMessage {
   id: number;
   user_message: string;
   ai_response: string;
+  model: string;
   created_at: string;
 }
 
@@ -28,6 +29,12 @@ interface ApiKey {
   id: number;
   api_name: string;
   api_key: string;
+}
+
+// Extract the model name from a model path string.
+function extractModelName(modelPath: string): string {
+  const match = modelPath.match(/models\/([^/]+)/);
+  return match ? match[1] : "AI";
 }
 
 export default function Playground() {
@@ -45,54 +52,54 @@ export default function Playground() {
 
   const userAccount = useActiveAccount();
 
-  // Fetch user ID and unreal_token
+  // Fetch user profile and validate Unreal access token
   const fetchUser = async () => {
     if (!userAccount?.address) return;
+
     const userRes = await getUserByWallet(userAccount.address);
-    if (userRes.success && userRes.data) {
-      const unrealToken = userRes.data.unreal_token;
 
-      if (unrealToken) {
-        // Verify token
-        const verifyRes = await verifyUnrealAccessToken(unrealToken);
-        setIsUnrealTokenValid(verifyRes.success);
-      } else {
-        setIsUnrealTokenValid(false);
-      }
-      setUserId(userRes.data.id);
-      setUnrealToken(userRes.data.unreal_token);
-
-      // Fetch last 5 chat history
-      await fetchChatHistory(userRes.data.id, 5).then((data) =>
-        setMessages(data)
-      );
-
-      // Fetch API keys
-      await fetchApiKeys(userRes.data.id);
-    } else {
+    if (!userRes.success || !userRes.data) {
       toast.error("Failed to fetch user data");
+      return;
     }
+
+    const { id, unreal_token } = userRes.data;
+
+    // Verify Unreal access token if present
+    if (unreal_token) {
+      const verifyRes = await verifyUnrealAccessToken(unreal_token);
+      setIsUnrealTokenValid(verifyRes.success);
+    } else {
+      setIsUnrealTokenValid(false);
+    }
+    setUserId(id);
+    setUnrealToken(unreal_token);
+
+    // Load last 5 chat messages
+    const history = await fetchChatHistory(id, 5);
+    setMessages(history);
   };
 
-  // Fetch user's API keys
+  // Fetch API keys for the given user
   const fetchApiKeys = async (userId: number) => {
     try {
       const apiKeysRes = await getApiKeysByUser(userId);
-      if (apiKeysRes.success) {
-        if (apiKeysRes.data && apiKeysRes.data.length > 0) {
-          setApiKeys(apiKeysRes.data);
-          setSelectedApiKey(apiKeysRes.data[0].api_key); // Default to first API key
-        } else {
-          setSelectedApiKey(unrealToken || ""); // Fallback to unrealToken if no API keys
-        }
+
+      if (!apiKeysRes.success) throw new Error("Failed to fetch API keys");
+
+      if (apiKeysRes.data && apiKeysRes.data.length > 0) {
+        setApiKeys(apiKeysRes.data);
+        setSelectedApiKey(apiKeysRes.data[0].api_key); // Default to first API key
       } else {
-        throw new Error("Failed to fetch API keys");
+        setSelectedApiKey(unrealToken || ""); // Fallback to unrealToken if no API keys
       }
     } catch (error) {
       console.error("Error fetching API keys", error);
       toast.error("Failed to fetch API keys");
     }
   };
+
+  // Event Handlers
 
   // Send message to get completion from Unreal API
   const handleSendMessage = async () => {
@@ -103,7 +110,7 @@ export default function Playground() {
 
     setLoading(true);
     try {
-      console.log(
+      console.debug(
         `Get chat completion with model: ${selectedModel}, input: ${input}`
       );
 
@@ -126,8 +133,9 @@ export default function Playground() {
       );
       setInput("");
 
-      // Fetch last 5 chat history
-      await fetchChatHistory(userId!, 5).then((data) => setMessages(data));
+      // Fetch last 5 chat messages
+      const history = await fetchChatHistory(userId!, 5);
+      setMessages(history);
     } catch (error) {
       console.error("Error chat completion", error);
       toast.error(
@@ -140,25 +148,33 @@ export default function Playground() {
 
   // Delete all user's chat history
   const handleClear = async () => {
+    if (!userId) return;
+
     setLoading(true);
     try {
-      await deleteAllChatHistory(userId!);
+      await deleteAllChatHistory(userId);
+
+      const history = await fetchChatHistory(userId, 5);
+      setMessages(history);
     } catch (error) {
       console.error("Error clear chat history", error);
       toast.error(
         error instanceof Error ? error.message : "Failed Clear Chat History"
       );
     } finally {
-      // Fetch last 5 chat history
-      await fetchChatHistory(userId!, 5).then((data) => setMessages(data));
       setLoading(false);
     }
   };
 
-  // Fetch user ID and unreal_token on page load
+  // Fetch user ID on page load
   useEffect(() => {
     fetchUser();
   }, [userAccount]);
+
+  // Fetch user's API keys on user load
+  useEffect(() => {
+    if (userId) fetchApiKeys(userId!);
+  }, [userId]);
 
   // Auto-scroll to the bottom when messages update
   useEffect(() => {
@@ -239,7 +255,8 @@ export default function Playground() {
                   <strong>User:</strong> {msg.user_message}
                 </div>
                 <div className="p-3 bg-[#2B2B2B] rounded-[20px] text-[#F5F5F5]">
-                  <strong>AI:</strong> {msg.ai_response}
+                  <strong>{extractModelName(msg.model)}:</strong>{" "}
+                  {msg.ai_response}
                 </div>
               </div>
             ))}

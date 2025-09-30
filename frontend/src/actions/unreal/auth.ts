@@ -1,60 +1,67 @@
 "use server";
 
 import { unrealApiUrl } from "@/utils/config";
+import {
+  UnrealRegisterResponse,
+  UnrealVerifyTokenResponse,
+} from "@/utils/types";
 
-// Register to Unreal API and get access token
+// Register with the Unreal API to obtain access token
 export const registerUnrealApiAccess = async (
   messagePayload: string,
   walletAddress: string,
-  signature: string
-) => {
+  signature: string,
+  permitPayload?: string,
+  permitSignature?: string
+): Promise<UnrealRegisterResponse> => {
   try {
     // Prepare payload for Unreal AI API registration
     const payload = JSON.parse(messagePayload);
 
-    // Prepare request body
+    // Build request body
     const body = JSON.stringify({
       payload,
       signature,
       address: walletAddress,
+      ...(permitPayload ? { permit: JSON.parse(permitPayload) } : {}),
+      ...(permitSignature ? { permitSignature } : {}),
     });
 
-    console.log("Unreal registration body", body);
+    console.debug("Unreal registration body", body);
 
-    // Send to Unreal AI API
+    // Register to Unreal AI API
     const response = await fetch(`${unrealApiUrl}/v1/auth/register`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body,
     });
 
-    if (!response.ok) {
-      const errorData = await response.json();
-      console.log("Unreal registration error", errorData);
-
-      throw new Error(errorData.error || "Unreal Registration failed");
-    }
-
     const data = await response.json();
 
-    console.log("Unreal registration data", data);
+    if (!response.ok) {
+      console.error("Unreal registration error", data);
+      throw new Error(data.error || "Unreal Registration failed");
+    }
 
-    const unrealToken = data.token;
+    console.debug("Unreal registration data", data);
+
     return {
       success: true,
-      unrealToken,
+      unrealToken: data.token,
     };
   } catch (error) {
-    console.log("Error register Unreal API", error);
+    console.error("Error register Unreal API", error);
     return {
       success: false,
-      error,
+      error: error instanceof Error ? error.message : "Unknown error",
     };
   }
 };
 
 // Verify the validity of Unreal API access token
-export const verifyUnrealAccessToken = async (accessToken: string) => {
+export const verifyUnrealAccessToken = async (
+  accessToken: string
+): Promise<UnrealVerifyTokenResponse> => {
   try {
     const response = await fetch(
       `${unrealApiUrl}/v1/auth/verify?token=${accessToken}`,
@@ -63,14 +70,14 @@ export const verifyUnrealAccessToken = async (accessToken: string) => {
       }
     );
 
-    if (!response.ok) {
-      const errorData = await response.json();
-      return { success: false, message: errorData.error || "Invalid token" };
-    }
-
     const data = await response.json();
 
-    console.log("Verify Access Token response", data);
+    if (!response.ok) {
+      console.error("Verify token failed", data);
+      return { success: false, message: data.error || "Invalid token" };
+    }
+
+    console.debug("Verify Access Token response", data);
 
     return { success: true, data };
   } catch (error) {

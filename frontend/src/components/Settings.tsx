@@ -1,6 +1,8 @@
 "use client";
 
 import { getUserByWallet, updateUserProfile } from "@/actions/supabase/users";
+import { imageFileToObjectUrl } from "@/utils/files";
+import { validateEmail } from "@/utils/validation";
 import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import { useActiveAccount } from "thirdweb/react";
@@ -178,20 +180,6 @@ export default function Settings() {
     setShowEditProfile(false);
   };
 
-  const validateEmail = (email: string) => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
-  };
-
-  // Convert Image file to ObjecUrl
-  const imageFileToObjectUrl = (file: File) => {
-    if (file) {
-      const objectUrl = URL.createObjectURL(file);
-      return objectUrl;
-    }
-    return "https://placehold.co/120"; // Return placeholder by default
-  };
-
   const fetchUserProfile = async () => {
     if (!userAccount) return;
     const userRes = await getUserByWallet(userAccount.address);
@@ -232,17 +220,17 @@ export default function Settings() {
       <div className="p-8 bg-[rgba(25,25,25,0.15)] min-h-full">
         <div className="flex justify-between items-start">
           {/* Settings Options */}
-          <div className="flex flex-col gap-6 w-[992px]">
+          <div className="flex flex-col gap-6 w-full">
             {settingsOptions.map((option) => (
               <div
                 key={option.id}
-                className="flex items-center gap-6 p-6 bg-[#050505] border border-[#232323] rounded-[20px] cursor-pointer hover:bg-[#191919]/20 transition-colors"
+                className="flex items-center gap-6 p-6 bg-[#050505] border border-[#232323] rounded-2xl cursor-pointer hover:bg-[#191919]/20 transition-colors"
                 onClick={option.onClick}
               >
                 <div className="w-6 h-6 flex items-center justify-center">
                   {option.icon}
                 </div>
-                <h3 className="flex-1 text-[#DADADA] text-xl font-medium leading-[30px]">
+                <h3 className="flex-1 text-[#DADADA] text-xl font-medium leading-6">
                   {option.title}
                 </h3>
               </div>
@@ -250,7 +238,7 @@ export default function Settings() {
           </div>
 
           {/* Log Out Button */}
-          {/* <button className="flex items-center gap-2 px-6 py-3 bg-[#232323] rounded-[20px] text-[#F5F5F5] text-base font-semibold leading-6 hover:bg-[#2B2B2B] transition-colors">
+          {/* <button className="flex items-center gap-2 px-6 py-3 bg-[#232323] rounded-2xl text-[#F5F5F5] text-base font-semibold leading-6 hover:bg-[#2B2B2B] transition-colors">
             <svg width="24" height="24" viewBox="0 0 25 24" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M11 20.25C11 20.4489 10.921 20.6397 10.7803 20.7803C10.6397 20.921 10.4489 21 10.25 21H5C4.60218 21 4.22064 20.842 3.93934 20.5607C3.65804 20.2794 3.5 19.8978 3.5 19.5V4.5C3.5 4.10218 3.65804 3.72064 3.93934 3.43934C4.22064 3.15804 4.60218 3 5 3H10.25C10.4489 3 10.6397 3.07902 10.7803 3.21967C10.921 3.36032 11 3.55109 11 3.75C11 3.94891 10.921 4.13968 10.7803 4.28033C10.6397 4.42098 10.4489 4.5 10.25 4.5H5V19.5H10.25C10.4489 19.5 10.6397 19.579 10.7803 19.7197C10.921 19.8603 11 20.0511 11 20.25ZM21.2806 11.4694L17.5306 7.71937C17.3899 7.57864 17.199 7.49958 17 7.49958C16.801 7.49958 16.6101 7.57864 16.4694 7.71937C16.3286 7.86011 16.2496 8.05098 16.2496 8.25C16.2496 8.44902 16.3286 8.63989 16.4694 8.78063L18.9397 11.25H10.25C10.0511 11.25 9.86032 11.329 9.71967 11.4697C9.57902 11.6103 9.5 11.8011 9.5 12C9.5 12.1989 9.57902 12.3897 9.71967 12.5303C9.86032 12.671 10.0511 12.75 10.25 12.75H18.9397L16.4694 15.2194C16.3286 15.3601 16.2496 15.551 16.2496 15.75C16.2496 15.949 16.3286 16.1399 16.4694 16.2806C16.6101 16.4214 16.801 16.5004 17 16.5004C17.199 16.5004 17.3899 16.4214 17.5306 16.2806L21.2806 12.5306C21.3504 12.461 21.4057 12.3783 21.4434 12.2872C21.4812 12.1962 21.5006 12.0986 21.5006 12C21.5006 11.9014 21.4812 11.8038 21.4434 11.7128C21.4057 11.6217 21.3504 11.539 21.2806 11.4694Z" fill="#C1C1C1"/>
             </svg>
@@ -261,11 +249,11 @@ export default function Settings() {
 
       {/* Edit Profile Modal */}
       {showEditProfile && (
-        <div className="fixed inset-0 bg-[rgba(5,5,5,0.5)] backdrop-blur-[3px] flex items-center justify-center z-50 overflow-auto">
-          <div className="w-full max-w-[520px] bg-[#191919] border border-[#232323] rounded-[20px] p-6 backdrop-blur-[7.5px] md:p-8">
+        <div className="fixed inset-0 bg-[rgba(5,5,5,0.5)] backdrop-blur-sm flex items-center justify-center z-50 overflow-auto">
+          <div className="w-full max-w-lg sm:mx-4 bg-[#191919] border border-[#232323] rounded-2xl p-6 sm:p-8 shadow-lg">
             {/* Modal Header */}
-            <div className="flex items-center justify-between mb-9">
-              <h2 className="text-[#F5F5F5] text-2xl font-bold leading-8">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-[#F5F5F5] text-xl sm:text-2xl font-bold">
                 Edit Profile
               </h2>
               <button
@@ -417,14 +405,14 @@ export default function Settings() {
               <div className="flex justify-end gap-6">
                 <button
                   onClick={handleCancel}
-                  className="w-[170px] px-6 py-3 bg-transparent border border-[#232323] rounded-[20px] text-[#F5F5F5] text-base font-semibold leading-6 hover:bg-[#191919] transition-colors"
+                  className="w-[170px] px-6 py-3 bg-transparent border border-[#232323] rounded-2xl text-[#F5F5F5] text-base font-semibold leading-6 hover:bg-[#191919] transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   onClick={handleSubmit}
-                  className="w-[170px] px-6 py-3 bg-[#232323] rounded-[20px] text-[#F5F5F5] text-base font-semibold leading-6 hover:bg-[#2B2B2B] transition-colors"
+                  className="w-[170px] px-6 py-3 bg-[#232323] rounded-2xl text-[#F5F5F5] text-base font-semibold leading-6 hover:bg-[#2B2B2B] transition-colors"
                 >
                   Save changes
                 </button>

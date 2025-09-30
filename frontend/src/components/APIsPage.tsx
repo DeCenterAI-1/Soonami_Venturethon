@@ -21,6 +21,7 @@ import RefreshCW from "./ui/RefreshCW";
 
 export default function APIsPage() {
   const userAccount = useActiveAccount();
+
   const [apiKeys, setApiKeys] = useState<ApiKeyType[]>([]);
   const [filter, setFilter] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -37,41 +38,42 @@ export default function APIsPage() {
     try {
       // Get user from Supabase to get userId
       const userRes = await getUserByWallet(userAccount.address);
+
       if (!userRes.success || !userRes.data.id) {
         throw new Error("Failed to retrieve user ID");
       }
-      const userId = userRes.data.id;
-      const unrealToken = userRes.data.unreal_token;
 
-      if (unrealToken) {
-        // Verify token
-        const verifyRes = await verifyUnrealAccessToken(unrealToken);
+      const { id: userId, unreal_token } = userRes.data;
+
+      // Validate Unreal access token if available
+      if (unreal_token) {
+        const verifyRes = await verifyUnrealAccessToken(unreal_token);
         setIsUnrealTokenValid(verifyRes.success);
       } else {
         setIsUnrealTokenValid(false);
       }
 
-      // Fetch Unreal API keys
+      // Fetch and sync Unreal API keys
       const unrealKeysRes = await getAllUnrealApiKeys(userAccount.address);
       if (!unrealKeysRes.success) {
         throw new Error("Failed to fetch Unreal API keys");
       }
 
-      if (unrealKeysRes.data && unrealKeysRes.data.length) {
+      if (unrealKeysRes.data?.length) {
         // Sync with Supabase
         const syncRes = await syncApiKeysWithUnreal(userId, unrealKeysRes.data);
         if (!syncRes.success) {
           throw new Error("Failed to sync API keys with Supabase");
         }
-
-        // Fetch updated API keys from Supabase
-        const apiKeysRes = await getApiKeysByUser(userId);
-        if (!apiKeysRes.success) {
-          throw new Error("Failed to fetch API keys from Supabase");
-        }
-
-        setApiKeys(apiKeysRes.data || []);
       }
+
+      // Fetch user's API keys from Supabase
+      const apiKeysRes = await getApiKeysByUser(userId);
+      if (!apiKeysRes.success) {
+        throw new Error("Failed to fetch API keys from Supabase");
+      }
+
+      setApiKeys(apiKeysRes.data || []);
     } catch (error) {
       toast.error(
         error instanceof Error
@@ -119,7 +121,7 @@ export default function APIsPage() {
     toast.success("API key copied to clipboard!");
   };
 
-  // Delete an API key from Unreal API and Supabase api_keys table
+  // Revoke and Delete an API key from Unreal API and Supabase api_keys table
   const handleRevokeApiKey = async (apiKey: string) => {
     if (!userAccount?.address) {
       toast.error("Please connect your wallet");
