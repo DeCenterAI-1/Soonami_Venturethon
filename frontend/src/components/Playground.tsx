@@ -6,7 +6,7 @@ import { toast } from "react-toastify";
 import { useActiveAccount, useActiveWallet } from "thirdweb/react";
 import { models } from "@/utils/models";
 import TokenInvalidMessage from "./messages/TokenInvalidMessage";
-import { verifyUnrealAccessToken } from "@/actions/unreal/auth";
+import { verifyUnrealSessionToken } from "@/actions/unreal/auth";
 import Spinner from "./ui/Spinner";
 import {
   deleteAllChatHistory,
@@ -53,7 +53,7 @@ export default function Playground() {
   const userAccount = useActiveAccount();
   const userWallet = useActiveWallet();
 
-  // Fetch user profile and validate Unreal access token
+  // Fetch user profile and validate Unreal session token
   const fetchUser = async () => {
     if (!userAccount?.address) return;
 
@@ -66,9 +66,9 @@ export default function Playground() {
 
     const { id, unreal_token } = userRes.data;
 
-    // Verify Unreal access token if present
+    // Verify Unreal session token if present
     if (unreal_token) {
-      const verifyRes = await verifyUnrealAccessToken(unreal_token);
+      const verifyRes = await verifyUnrealSessionToken(unreal_token);
       setIsUnrealTokenValid(verifyRes.success);
     } else {
       setIsUnrealTokenValid(false);
@@ -105,7 +105,7 @@ export default function Playground() {
   // Send message to get completion from Unreal API
   const handleSendMessage = async () => {
     if (!input.trim() || !selectedApiKey) {
-      toast.error("Invalid input or API key / access token");
+      toast.error("Invalid input or API key / session token");
       return;
     }
 
@@ -231,7 +231,9 @@ export default function Playground() {
                   className="h-14 px-4 bg-transparent border border-[#232323] rounded-[20px] text-[#8F8F8F] text-sm focus:border-[#494949] focus:outline-none"
                 >
                   {apiKeys.length === 0 ? (
-                    <option value={unrealToken || ""}>Your access token</option>
+                    <option value={unrealToken || ""}>
+                      Your session token
+                    </option>
                   ) : (
                     apiKeys.map((key) => (
                       <option key={key.id} value={key.api_key}>
