@@ -3,6 +3,13 @@
 import { supabase } from "@/lib/supabase";
 import { UnrealApiKey } from "@/utils/types";
 
+// Convert unix timestamp (seconds) to ISO string
+function toIsoStringFromUnix(unix: number | undefined) {
+  if (!unix) return null;
+  // multiply by 1000 if it's in seconds
+  return new Date(unix * 1000).toISOString();
+}
+
 // Sync all user's API keys with Unreal API and update api_keys table in Supabase
 export const syncApiKeysWithUnreal = async (
   userId: number,
@@ -15,51 +22,44 @@ export const syncApiKeysWithUnreal = async (
       throw new Error("User ID and Unreal API keys are required");
     }
 
-    for (const keyData of unrealApiKeys) {
-      const { hash, key, name, calls, paymentToken, chainId } = keyData;
-      if (!hash) continue;
+    // Get all hashes for this user at once
+    const hashes = unrealApiKeys.map((k) => k.hash).filter(Boolean);
 
-      const { data: existingKey, error: fetchError } = await supabase
-        .from("api_keys")
-        .select("id")
-        .eq("api_hash", hash)
-        .eq("user", userId)
-        .single();
+    const { data: existingKeys, error: fetchError } = await supabase
+      .from("api_keys")
+      .select("id, api_hash")
+      .eq("user", userId)
+      .in("api_hash", hashes);
 
-      if (fetchError && fetchError.code !== "PGRST116") {
-        throw fetchError;
-      }
+    if (fetchError) throw fetchError;
 
-      if (existingKey) {
-        // Update existing key
-        const { error: updateError } = await supabase
+    const existingKeyMap = new Map(
+      (existingKeys ?? []).map((k) => [k.api_hash, k.id])
+    );
+
+    // Prepare updates in parallel
+    const updates = unrealApiKeys
+      .filter((k) => k.hash && existingKeyMap.has(k.hash))
+      .map((k) => {
+        const lastUsed =
+          toIsoStringFromUnix(k.updatedAt) ?? new Date().toISOString();
+
+        return supabase
           .from("api_keys")
           .update({
-            calls,
-            // api_key: key,
-            // api_name: name,
-            // payment_token: paymentToken,
-            chain_id: chainId,
-            last_used: new Date().toISOString(), // Update last_used on sync
+            calls: k.calls,
+            chain_id: k.chainId,
+            last_used: lastUsed,
           })
-          .eq("id", existingKey.id);
-        if (updateError) throw updateError;
-      } else {
-        // Insert new key
-        const { error: insertError } = await supabase.from("api_keys").insert({
-          user: userId,
-          provider: "unreal",
-          api_key: key,
-          api_hash: hash,
-          api_name: name,
-          payment_token: paymentToken,
-          calls,
-          chain_id: chainId,
-          last_used: new Date().toISOString(),
-        });
-        if (insertError) throw insertError;
-      }
-    }
+          .eq("id", existingKeyMap.get(k.hash)!);
+      });
+
+    // Run all updates concurrently
+    const results = await Promise.all(updates);
+
+    // Check for errors
+    const failed = results.find((r) => r.error);
+    if (failed?.error) throw failed.error;
 
     return { success: true };
   } catch (error) {
