@@ -1,6 +1,8 @@
 "use server";
 
 import { supabase } from "@/lib/supabase";
+import { client } from "@/lib/thirdweb";
+import { fetchUserFromThirdWeb } from "@/services/thirdweb";
 import { UserProfileType, UserUnrealTokenType } from "@/utils/types";
 import { revalidatePath } from "next/cache";
 
@@ -28,11 +30,15 @@ export const getUserByWallet = async (userWallet: string) => {
       };
     }
 
+    // Fetch User Profile from Thirdweb
+    const thirdwebUser = await fetchUserFromThirdWeb(client, userWallet);
+
     // Create a new user in the supabase DB
     const newUserObj = {
       wallet: userWallet,
       is_active: true,
       is_admin: false,
+      email: thirdwebUser ? thirdwebUser.email : null,
     };
     const { data: newUser, error: newUserError } = await supabase
       .from("user_profiles")

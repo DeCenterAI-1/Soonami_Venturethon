@@ -3,7 +3,7 @@
 import { getUserByWallet } from "@/actions/supabase/users";
 import { useState, useEffect, useRef } from "react";
 import { toast } from "react-toastify";
-import { useActiveAccount } from "thirdweb/react";
+import { useActiveAccount, useActiveWallet } from "thirdweb/react";
 import { models } from "@/utils/models";
 import TokenInvalidMessage from "./messages/TokenInvalidMessage";
 import { verifyUnrealAccessToken } from "@/actions/unreal/auth";
@@ -51,6 +51,7 @@ export default function Playground() {
   const chatEndRef = useRef<HTMLDivElement>(null); // Ref for auto-scroll
 
   const userAccount = useActiveAccount();
+  const userWallet = useActiveWallet();
 
   // Fetch user profile and validate Unreal access token
   const fetchUser = async () => {
@@ -183,7 +184,13 @@ export default function Playground() {
 
   return (
     <div className="flex-1 bg-[#050505] min-h-screen">
-      {!isUnrealTokenValid && <TokenInvalidMessage />}
+      {!isUnrealTokenValid && (
+        <TokenInvalidMessage
+          account={userAccount}
+          chainId={userWallet?.getChain()?.id}
+          onRefreshSuccess={fetchUser} // Re-fetch user data to update token validity
+        />
+      )}
 
       <div className="flex gap-6 p-8">
         {/* Main Content */}

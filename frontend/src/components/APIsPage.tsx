@@ -5,7 +5,7 @@ import {
   deleteApiKey,
   getAllUnrealApiKeys,
 } from "@/actions/unreal/api";
-import { useActiveAccount } from "thirdweb/react";
+import { useActiveAccount, useActiveWallet } from "thirdweb/react";
 import { useEffect, useState } from "react";
 import { getUserByWallet } from "@/actions/supabase/users";
 import {
@@ -21,6 +21,7 @@ import RefreshCW from "./ui/RefreshCW";
 
 export default function APIsPage() {
   const userAccount = useActiveAccount();
+  const userWallet = useActiveWallet();
 
   const [apiKeys, setApiKeys] = useState<ApiKeyType[]>([]);
   const [filter, setFilter] = useState("");
@@ -56,14 +57,18 @@ export default function APIsPage() {
       // Fetch and sync Unreal API keys
       const unrealKeysRes = await getAllUnrealApiKeys(userAccount.address);
       if (!unrealKeysRes.success) {
-        throw new Error("Failed to fetch Unreal API keys");
+        toast.error(
+          unrealKeysRes.message || "Failed to fetch API keys from Unreal API"
+        );
       }
 
       if (unrealKeysRes.data?.length) {
         // Sync with Supabase
         const syncRes = await syncApiKeysWithUnreal(userId, unrealKeysRes.data);
         if (!syncRes.success) {
-          throw new Error("Failed to sync API keys with Supabase");
+          toast.error(
+            syncRes.message || "Failed to sync API keys with Supabase"
+          );
         }
       }
 
@@ -158,7 +163,13 @@ export default function APIsPage() {
     <div>
       {/* APIs Content */}
       <div className="flex-1 p-8 bg-[#191919]/15">
-        {!isUnrealTokenValid && <TokenInvalidMessage />}
+        {!isUnrealTokenValid && (
+          <TokenInvalidMessage
+            account={userAccount}
+            chainId={userWallet?.getChain()?.id}
+            onRefreshSuccess={fetchAndSyncApiKeys} // Re-fetch to update token validity
+          />
+        )}
 
         <div className="max-w-7xl mx-auto space-y-0">
           {/* Page Header */}
@@ -266,15 +277,18 @@ export default function APIsPage() {
                           </span>
                         </div>
 
-                        <div className="w-28">
+                        <div className="w-28 text-center">
                           <span className="text-[#8F8F8F] text-xs font-medium">
-                            Chain Id: {key.chain_id}
+                            Calls: {key.calls?.toFixed(2)}
                           </span>
                         </div>
 
-                        <div className="w-28 text-center">
+                        <div className="w-28">
                           <span className="text-[#8F8F8F] text-xs font-medium">
-                            Calls: {key.calls}
+                            Last Used:{" "}
+                            {key.last_used
+                              ? new Date(key.last_used).toLocaleDateString()
+                              : ""}
                           </span>
                         </div>
                       </div>
