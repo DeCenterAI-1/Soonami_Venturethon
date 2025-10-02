@@ -6,7 +6,7 @@ import {
   UnrealVerifyTokenResponse,
 } from "@/utils/types";
 
-// Register with the Unreal API to obtain access token
+// Register with the Unreal API to obtain session token
 export const registerUnrealApiAccess = async (
   messagePayload: string,
   walletAddress: string,
@@ -58,13 +58,13 @@ export const registerUnrealApiAccess = async (
   }
 };
 
-// Verify the validity of Unreal API access token
-export const verifyUnrealAccessToken = async (
-  accessToken: string
+// Verify the validity of Unreal API session token
+export const verifyUnrealSessionToken = async (
+  sessionToken: string
 ): Promise<UnrealVerifyTokenResponse> => {
   try {
     const response = await fetch(
-      `${unrealApiUrl}/v1/auth/verify?token=${accessToken}`,
+      `${unrealApiUrl}/v1/auth/verify?token=${sessionToken}`,
       {
         method: "GET",
       }
@@ -77,11 +77,11 @@ export const verifyUnrealAccessToken = async (
       return { success: false, message: data.error || "Invalid token" };
     }
 
-    console.debug("Verify Access Token response", data);
+    console.debug("Verify Session Token response", data);
 
     return { success: true, data };
   } catch (error) {
-    console.error("Error verifying Unreal access token:", error);
+    console.error("Error verifying Unreal session token:", error);
     return {
       success: false,
       message:

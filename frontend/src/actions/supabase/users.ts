@@ -60,7 +60,7 @@ export const getUserByWallet = async (userWallet: string) => {
   }
 };
 
-// Update an user's unreal access token in Supabase users table by wallet address
+// Update an user's unreal session token in Supabase users table by wallet address
 export const updateUserUnrealToken = async (
   userWallet: string,
   userUnrealToken: UserUnrealTokenType
