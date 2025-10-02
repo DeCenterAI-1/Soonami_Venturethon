@@ -3,7 +3,7 @@
 import { supabase } from "@/lib/supabase";
 import { UnrealApiKey } from "@/utils/types";
 
-// Convert unix timestamp (seconds) → ISO string
+// Convert unix timestamp (seconds) to ISO string
 function toIsoStringFromUnix(unix: number | undefined) {
   if (!unix) return null;
   // multiply by 1000 if it's in seconds
