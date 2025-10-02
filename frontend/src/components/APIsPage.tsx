@@ -14,7 +14,7 @@ import {
 } from "@/actions/supabase/api_keys";
 import { toast } from "react-toastify";
 import { ApiKeyType } from "@/utils/types";
-import { verifyUnrealAccessToken } from "@/actions/unreal/auth";
+import { verifyUnrealSessionToken } from "@/actions/unreal/auth";
 import TokenInvalidMessage from "./messages/TokenInvalidMessage";
 import Spinner from "./ui/Spinner";
 import RefreshCW from "./ui/RefreshCW";
@@ -46,9 +46,9 @@ export default function APIsPage() {
 
       const { id: userId, unreal_token } = userRes.data;
 
-      // Validate Unreal access token if available
+      // Validate Unreal session token if available
       if (unreal_token) {
-        const verifyRes = await verifyUnrealAccessToken(unreal_token);
+        const verifyRes = await verifyUnrealSessionToken(unreal_token);
         setIsUnrealTokenValid(verifyRes.success);
       } else {
         setIsUnrealTokenValid(false);

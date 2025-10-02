@@ -38,7 +38,7 @@ export const createUnrealApiKey = async (
     // Step 3: Get unreal_token from user
     const unrealToken = user.unreal_token;
     if (!unrealToken) {
-      throw new Error("No unreal_token found for the user");
+      throw new Error("No Unreal session token found for the user");
     }
 
     // Step 4: Call POST /v1/keys
@@ -130,7 +130,7 @@ export const getAllUnrealApiKeys = async (userWallet: string) => {
     // Step 2: Get unreal_token from user
     const unrealToken = user.unreal_token;
     if (!unrealToken) {
-      throw new Error("No unreal_token found for the user");
+      throw new Error("No Unreal session token found for the user");
     }
 
     // Step 3: Call GET /v1/keys
@@ -190,7 +190,7 @@ export const deleteApiKey = async (key: string, userWallet: string) => {
     // Step 2: Get unreal_token from user
     const unrealToken = user.unreal_token;
     if (!unrealToken) {
-      throw new Error("No unreal_token found for the user");
+      throw new Error("No Unreal session token found for the user");
     }
 
     // Step 3: Call DELETE /v1/keys/{key}
